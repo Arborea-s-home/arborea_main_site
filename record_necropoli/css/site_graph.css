@@ -1,0 +1,19 @@
+#site-chart-section {
+    text-align: center;
+    margin-top: 15px;
+    background: transparent;
+    border-radius: 12px;
+  }
+  
+  #site-chart-container {
+    margin: 0 auto;
+    width: 300px;
+    height: 300px;
+    position: relative;
+  }
+  
+  #site-chart-container canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+  

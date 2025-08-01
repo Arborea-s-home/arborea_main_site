@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyMiTo</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+  <!-- Stile personalizzato -->
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- PapaParse per leggere CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="tutorial-group">
+      <label class="switch">
+        <input type="checkbox" id="group-by-municipality">
+        <span class="slider round"></span>
+      </label>
+      <span>Group by ancient region</span>
+        <div style="margin-bottom: 1.5rem;"></div>   
+      <h2>Select archaeological feature</h2>
+      <div id="ambito-buttons" class="dashboard"></div>
+    </div>
+
+    <div id="mapped-sites-list">
+      <div id="mapped-sites-container"></div>
+      <ul id="mapped-sites-ul"></ul>
+    </div>    
+
+    <div id="legend">
+      <h3>Legend</h3>
+      <div id="gradient-bar"></div>
+      <div id="range-values">
+        <span id="min-val">0</span>
+        <span id="max-val">100</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logo -->
+
+  <div class="map-logo-container" id="map-logo-wrapper">
+    <a id="map-logo-link">
+      <img id="map-logo-img" alt="Mycenean and Minoan Tombs" class="map-logo" />
+    </a>
+    <button id="map-logo-toggle" title="Nascondi logo" aria-label="Nascondi logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <polyline points="18 15 12 9 6 15" />
+      </svg>
+    </button>
+  </div>  
+  <button id="map-logo-restore" title="Mostra logo">🔖</button>
+  
+  <!-- mappa -->
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <script type="module" src="charts.js"></script>
+  <script type="module" src="dashboard.js"></script>
+  <!-- Script per gestire percorsi dinamici -->
+  <script type="module">
+    import { getPath } from './path_utils.js';
+    document.getElementById("map-logo-img").src = getPath("images/logo_completo.png");
+    document.getElementById("map-logo-link").href = getPath("./info/info.html");
+  </script>
+
+  <!-- Mappa -->
+  <script type="module" src="map.js"></script> 
+  <script type="module" src="tutorial.js"></script>

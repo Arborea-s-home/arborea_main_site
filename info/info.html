@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MyMiTo Project Information</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="./info.css" />
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+<script type="module" src="./info.js"></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-content">
+      <a id="home-link" href="#"><img id="project-logo" alt="MyMiTo Project Logo" /></a>
+      <div class="header-text">
+        <h1>MyMiTo Project</h1>
+        <p class="subtitle">MYcenaean & MInoan TOmbs Database</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-container">
+    <section class="intro-section">
+      <h2>About the Project</h2>
+      <div class="intro-grid">
+        <div class="intro-card">
+          <h3>Code, Data and Usability</h3>
+          <p>
+            The <strong>MyMiTo</strong> (MYcenaean & MInoan TOmbs) Project aims at digitising and formalising funerary evidence from Mycenaean and Minoan contexts of the Late Bronze Age. It provides an accessible and practical tool for navigating, querying, and analysing archaeological data.
+          </p>
+          <p>
+            A secondary goal is to produce a reusable, open-source tool for managing legacy datasets of funerary contexts. It enables not only data visualisation and exploration, but also statistical, quantitative, and spatial analysis in an immediate and intuitive way, generating human-readable outputs. The project is currently developed independently by the author.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="licensing-section">
+      <h2>Licensing Overview</h2>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Source</th>
+              <th>License</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Code & Data Model</td>
+              <td>Developed by the author</td>
+              <td><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></td>
+            </tr>
+            <tr>
+              <td>Icons</td>
+              <td>Developed by the author & AI-generated</td>
+              <td><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></td>
+            </tr>
+            <tr>
+              <td>Archaeological Site Data</td>
+              <td>Adapted from <a href="https://helladic.info/index.php" target="_blank">Mycenaean Atlas</a></td>
+              <td><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank">CC BY 3.0</a></td>
+            </tr>
+            <tr>
+              <td>Archaeological Database (Data Only)</td>
+              <td>Produced by the author from published sources</td>
+              <td><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC BY-SA 4.0</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sources-section">
+      <h2>Primary Sources and Images</h2>
+      <p>
+        The table below lists the main edited sources from which archaeological data and visual materials have been extracted or digitised.
+      </p>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Publication</th>
+              <th class="center-cell">Data</th>
+              <th class="center-cell">Image</th>
+              <th>License</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href="https://digi.ub.uni-heidelberg.de/diglit/evans1905?ui_lang=eng" target="_blank">
+                  The Prehistoric Tombs at Knossos (Evans, A. 1905)
+                </a>
+              </td>
+              <td class="center-cell">✅</td>
+              <td class="center-cell">✅</td>
+              <td>CC0 (Public Domain)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="affinity-section">
+      <h2>Affinity Explanation</h2>
+      <div class="toggle-container">
+        <label class="switch-label">
+          <input type="checkbox" id="toggleExplanation" />
+          <span class="slider"></span>
+          <span class="label-text">Show Technical Explanation</span>
+        </label>
+      </div>
+
+      <div id="conceptual" class="explanation-section">
+        <div class="explanation-card">
+          <h3>Conceptual Explanation</h3>
+          <p>
+            Each archaeological context (e.g., a tomb) is described by a combination of
+            <strong>intrinsic parameters</strong> (such as tomb morphology or burial type)
+            and <strong>object-derived parameters</strong> (such as material, function, or decorative theme).
+            These parameters may result from <em>objective</em> observations or <em>interpretative</em> analyses.
+          </p>
+        
+          <p>
+            The algorithm calculates a value of <strong>affinity</strong> (or correlation) between contexts based on all available parameters.
+            Initially, every parameter is treated with equal weight, but its contribution is dynamically adjusted according to:
+          </p>
+        
+          <ul class="feature-list">
+            <li>its <strong>statistical rarity</strong> (automatically calculated)</li>
+            <li>its presence in a specific <em>combination of three parameters</em> (called a "triple")</li>
+            <li>optional <strong>user-defined weighting</strong> or exclusion</li>
+          </ul>
+        </div>
+
+        <div class="explanation-card">
+          <h4>Object-to-Object Comparison</h4>
+          <p>
+            Once a base context is selected, the algorithm compares each of its objects to the objects of every other context.
+            For each object, it finds the best possible match using a 1:1 matching logic. If multiple objects try to match the same target,
+            only the highest-scoring match is retained. Unmatched objects are still counted but contribute zero to the score.
+          </p>
+        </div>
+
+        <div class="table-container">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Tomb A – Objects</th>
+                <th>Tomb B – Objects</th>
+                <th>Matching Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>bronze, sword, weapon</td>
+                <td>bronze, sword, weapon</td>
+                <td class="match-cell">Match</td>
+              </tr>
+              <tr>
+                <td>bowl, pottery, open vessel</td>
+                <td>cup, pottery, open vessel</td>
+                <td class="partial-cell">Match (partial)</td>
+              </tr>
+              <tr>
+                <td>bead, precious metal, gold, jewelery</td>
+                <td>ring, precious metal, silver, jewelery</td>
+                <td class="partial-cell">Match (partial)</td>
+              </tr>
+              <tr>
+                <td>bronze spear, weapon</td>
+                <td class="unmatched-cell">sword, already paired with element 1</td>
+                <td class="unmatched-cell">Unmatched</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="explanation-card">
+          <h4>Rarity</h4>
+          <p>
+            After pairing, each matched parameter is adjusted according to its <strong>rarity</strong> in the entire dataset.
+            Common materials or functions (e.g., bronze, domestic) carry less weight, while rarer elements (e.g., iron weapons) become more influential.
+          </p>
+        </div>
+
+        <div class="table-container">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+                <th>Matched</th>
+                <th>Rarity Weight</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Material</td>
+                <td>bronze</td>
+                <td class="match-cell">Yes</td>
+                <td>Low (common)</td>
+              </tr>
+              <tr>
+                <td>Function</td>
+                <td>weapon</td>
+                <td class="match-cell">Yes</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Decoration</td>
+                <td>engraved</td>
+                <td class="unmatched-cell">No</td>
+                <td>High (rare)</td>
+              </tr>
+              <tr>
+                <td>Material</td>
+                <td>precious metal, gold</td>
+                <td class="partial-cell">Yes (partial)</td>
+                <td>Medium–High</td>
+              </tr>
+              <tr>
+                <td colspan="4" style="text-align: center;">…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="explanation-card">
+          <h4>Group-to-Group Similarity</h4>
+          <p>
+            After object matching, the algorithm computes the average similarity score between the two groups.
+            It also considers <strong>parameters proper to the context itself</strong> (e.g., the typology of the tomb itself) and includes their contribution to the final score.
+            <br />
+            <em>Objects that are not matched contribute a score of 0, and thus lower the overall average proportionally.</em>
+          </p>
+        </div>
+
+        <div class="table-container">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Contribution to Final Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Object matches (3 out of 4)</td>
+                <td>+0.6</td>
+              </tr>
+              <tr>
+                <td>Rare unmatched object</td>
+                <td>−0.3</td>
+              </tr>
+              <tr>
+                <td>Unmatched object (no rare value)</td>
+                <td>0.0</td>
+              </tr>
+              <tr>
+                <td>Matching static parameter</td>
+                <td>+0.2</td>
+              </tr>
+              <tr>
+                <td><strong>Total Affinity Score</strong></td>
+                <td><strong>≈ 0.5</strong> (scale 0–1)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="explanation-card">
+          <h4>Customization</h4>
+          <p>
+            Users may customize the process by:
+          </p>
+          <ul class="feature-list">
+            <li>Reweighting or excluding specific parameters (e.g., emphasize material over function)</li>
+            <li>Selecting a custom <strong>triple</strong> of parameters that, when matched, grant a score bonus</li>
+            <li>Adjusting the interpretation focus depending on the research question</li>
+          </ul>
+        </div>
+
+        <div class="table-container">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Compared Objects</th>
+                <th>Triple (Function – Material – Decoration)</th>
+                <th>Bonus Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A1 and B2</td>
+                <td>ritual – bronze – none</td>
+                <td class="match-cell">Yes</td>
+              </tr>
+              <tr>
+                <td>A3 and B3</td>
+                <td>unknown – bronze – decorative</td>
+                <td class="unmatched-cell">No</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="technical" class="explanation-section hidden">
+        <div class="infobox sticky-legend">
+          <strong>Symbol Legend:</strong>
+          <div class="legend-columns">
+            <ul>
+              <li><code>c, c′</code> – Archaeological contexts (e.g., tombs)</li>
+              <li><code>O, O′</code> – Set of objects in a context</li>
+              <li><code>o, o′</code> – Individual objects from a context</li>
+              <li><code>j</code> – Attribute index (e.g., material)</li>
+              <li><code>v</code> – Single value of an attribute (e.g., "bronze")</li>
+            </ul>
+            <ul>
+              <li><code>w(a<sub>j</sub>, v)</code> – Weight = rarity × importance</li>
+              <li><code>λ<sub>j</sub></code> – Importance of attribute <code>j</code></li>
+              <li><code>T</code> – Triplet of selected attributes</li>
+              <li><code>sim(...)</code> – Similarity (object or context)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="math-section">
+          <h3>1. Data Model</h3>
+          <p>
+            Let \( C = \{c_1, c_2, \dots, c_m\} \) be the set of contexts. Each context \( c_i \) has a set of associated objects \( O_i = \{o_1, o_2, \dots, o_n\} \).  
+            Each object \( o \in O_i \) is described by a vector of categorical attributes:
+            \[
+              o = \big(a_1(o), a_2(o), \dots, a_k(o)\big)
+            \]
+            where each \( a_j(o) \subseteq V_j \) is a (possibly multi-valued) set of values for attribute \( j \).
+            A distinguished triplet \( T = (a_{i_1}, a_{i_2}, a_{i_3}) \) can be selected for bonus scoring.
+          </p>
+        </div>
+
+        <div class="math-section">
+          <h3>2. Attribute Weighting and Rarity</h3>
+          <p>
+            Each attribute-value pair \( (a_j, v) \) is assigned a weight:
+            \[
+              w(a_j, v) = \frac{1}{\sqrt{f(a_j, v)}} \cdot \lambda_j
+            \]
+            where \( f(a_j, v) \) is the global frequency of value \( v \) for attribute \( j \), and \( \lambda_j \) is a user-defined importance weight.
+            This ensures that rare values contribute more to similarity, akin to inverse-document-frequency logic.
+          </p>
+        </div>
+
+        <div class="math-section">
+          <h3>3. Object-to-Object Similarity</h3>
+          <p><strong>a) Attribute-Level Similarity</strong></p>
+          <p>
+            For each attribute \( a_j \), similarity is computed as:
+            \[
+              \text{sim}_j(o, o') = \frac{\sum_{v \in a_j(o) \cap a_j(o')} w(a_j, v)}{\max(|a_j(o)|, |a_j(o')|)}
+            \]
+            This gives partial credit for overlapping values, normalized by the larger attribute set.
+          </p>
+
+          <p><strong>b) Weighted Attribute Sum</strong></p>
+          <p>
+            Total similarity across all attributes is computed as:
+            \[
+              \text{sim}_{\text{attr}}(o, o') = \sum_{j=1}^{k} \lambda_j \cdot \text{sim}_j(o, o')
+            \]
+          </p>
+
+          <p><strong>c) Triplet Bonus</strong></p>
+          <p>
+            If the full triplet \( T = (a_{i_1}, a_{i_2}, a_{i_3}) \) has matching values, a bonus is added:
+            \[
+              \text{bonus}_T(o, o') = \sum_{\substack{
+                v_1 \in a_{i_1}(o) \cap a_{i_1}(o') \\
+                v_2 \in a_{i_2}(o) \cap a_{i_2}(o') \\
+                v_3 \in a_{i_3}(o) \cap a_{i_3}(o')
+              }} \frac{1}{\sqrt{f_T(v_1, v_2, v_3)}}
+            \]
+          </p>
+
+          <p><strong>d) Final Object Similarity</strong></p>
+          <p>
+            The overall similarity between objects is:
+            \[
+              \text{sim}(o, o') = \frac{\text{sim}_{\text{attr}} + \text{bonus}_T}{k}
+            \]
+          </p>
+        </div>
+
+        <div class="math-section">
+          <h3>4. Context-to-Context Matching</h3>
+          <p>
+            Given two contexts \( c_i, c_j \) with object sets \( O_i, O_j \), a greedy 1:1 matching is performed to maximize total similarity.
+            Let \( M = \{(o, o')\} \) be the set of matched pairs (possibly with null matches).
+            The context similarity is:
+            \[
+              \text{sim}(c_i, c_j) = \frac{1}{|M|} \sum_{(o, o') \in M} \text{sim}(o, o')
+            \]
+          </p>
+        </div>
+
+        <div class="math-section">
+          <h3>5. Static Contextual Similarity</h3>
+          <p>
+            If the static types of both contexts match (e.g. same tomb typology), an additional bonus is computed as:
+            \[
+              \text{sim}_{\text{static}}(c_i, c_j) = \frac{1}{\sqrt{f_{\text{type}}(v)}}
+              \quad \text{if } \text{type}(c_i) = \text{type}(c_j) = v
+            \]
+            otherwise 0.
+          </p>
+        </div>
+
+        <div class="math-section">
+          <h3>6. Final Affinity Score</h3>
+          <p>
+            The final scalar score is:
+            \[
+              \text{affinity}(c_i, c_j) = \text{sim}(c_i, c_j) + \text{sim}_{\text{static}}(c_i, c_j)
+            \]
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="future-section">
+      <h2>Future Prospects</h2>
+      <div class="future-grid">
+        <div class="future-card">
+          <p>
+            The current prototype is designed as a scalable foundation for future extensions. Development plans include:
+          </p>
+          <ul class="feature-list">
+            <li><strong>Additional archaeological contexts</strong>, expanding the dataset beyond the current tombs.</li>
+            <li><strong>Hierarchical modeling of sub-contexts</strong> (e.g., chambers, deposits, burial phases) to reflect the internal complexity of funerary units.</li>
+            <li><strong>Incorporation of new data types</strong> where available, including human remains, archaeozoological findings, and botanical evidence.</li>
+            <li><strong>Introduction of spatial analysis tools</strong>, enabling map-based visualizations and geographic queries.</li>
+            <li><strong>Refinement and expansion of the affinity algorithm</strong>, with better control over weighting and improved treatment of edge cases.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <div class="footer-content">
+      <p>© 2025 MyMiTo Project | </p>
+      <img id="footer-logo" src="/images/logo_erasmo.svg" alt="Author Logo" />
+    </div>
+  </footer>
+
+  <script src="./info.js"></script>
+</body>
+</html>

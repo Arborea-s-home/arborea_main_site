@@ -1,0 +1,380 @@
+/* ========================
+   Global Styles
+======================== */
+:root {
+  --primary-color: #4361ee;
+  --secondary-color: #3f37c9;
+  --accent-color: #4cc9f0;
+  --light-bg: #f8f9fa;
+  --dark-text: #212529;
+  --light-text: #6c757d;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius: 12px;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--dark-text);
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* ========================
+   Main Layout
+======================== */
+#detail-container {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  position: relative;
+  gap: 0;
+}
+
+.page-title {
+  grid-row: 1;
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+  background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ========================
+   Map Section
+======================== */
+#detail-map-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  grid-row: 2;
+  min-height: 0;
+}
+
+#detail-map {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Map Controls */
+.leaflet-control-container .leaflet-bottom.leaflet-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.leaflet-control-zoom {
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+}
+
+/* Map Popups */
+.leaflet-popup-content {
+  min-width: 200px !important;
+  font-size: 0.9rem;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: var(--border-radius) !important;
+}
+
+/* Marker Clusters */
+.marker-cluster {
+  background-color: transparent;
+  border: none;
+}
+
+.marker-cluster div {
+  background-color: #3a0ca3;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px;
+}
+
+/* Icon Styling */
+
+/* ========================
+   Custom Markers
+======================== */
+.custom-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.marker-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(67, 97, 238, 0.8);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.marker-icon {
+  background-color: #fff;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+  object-fit: contain;
+}
+
+
+/* ========================
+   Site List
+======================== */
+
+#site-list-container {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 320px; /* Larghezza aumentata */
+  max-height: calc(100% - 100px);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  z-index: 1000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex-grow: 1;
+}
+
+#site-list-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+#site-list-container h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+#site-list-container h3::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url('../images/icons/grave.png');
+  background-size: contain;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+#site-list-container li::before {
+  filter: brightness(0) saturate(100%) invert(26%) sepia(89%) saturate(2015%) hue-rotate(224deg) brightness(93%) contrast(91%);
+  opacity: 0.8;
+}
+
+#site-list-container h3::before {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+#site-list-container li::before {
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+
+/* Collapsible Sections */
+.site-section {
+  margin-bottom: 8px;
+}
+
+.site-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.9rem;
+  color: var(--light-text);
+  transition: all 0.2s ease;
+}
+
+.site-section-header:hover {
+  color: var(--primary-color);
+}
+
+.site-section-header svg {
+  transition: transform 0.2s ease;
+}
+
+.site-section-header.collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.site-section-list {
+  max-height: 120px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 5px 0 10px 0;
+  padding-left: 15px;
+}
+
+.site-section-list li {
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.site-section-list li:hover {
+  color: var(--primary-color);
+  transform: translateX(3px);
+}
+
+.site-section-list li::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-image: url('../images/icons/grave.png');
+  background-size: contain;
+  margin-right: 8px;
+  opacity: 0.5;
+}
+
+/* ========================
+   Chart Section
+======================== */
+#detail-chart {
+
+  display: none;
+}
+
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 15px;
+  box-shadow: var(--card-shadow);
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.site-list-chart {
+  height: 120px; /* Altezza ridotta */
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+}
+
+/* ========================
+   UI Elements
+======================== */
+
+/* Back Button */
+
+.back-home-button {
+  display: inline-flex;
+  align-items: center;
+  margin: 10px 10px 0 10px;
+  padding: 6px 10px;
+  background-color: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+  z-index: 2000;
+}
+
+.back-home-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.back-home-button img {
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  width: 1px;
+  height: 1px;
+  z-index: 1000;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* ========================
+   Responsive
+======================== */
+@media (max-width: 768px) {
+  #site-list-container {
+    width: 200px;
+    font-size: 0.8rem;
+    top: 70px;
+    right: 10px;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+    padding: 15px 0;
+  }
+  
+  .leaflet-control-zoom {
+    display: none;
+  }
+  
+  .back-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(67,97,238,0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(67,97,238,0.5);
+}
+}

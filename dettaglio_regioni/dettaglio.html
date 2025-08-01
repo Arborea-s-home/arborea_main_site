@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dettaglio</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  
+  <!-- Font Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stile personalizzato -->
+  <link rel="stylesheet" href="dettaglio.css" />
+  <link rel="stylesheet" href="../style.css" />
+  
+  <!-- PapaParse per leggere CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  
+</head>
+<body>
+  <div id="detail-container">
+    <!-- Titolo generato dinamicamente da JS -->
+
+      <!-- Pulsante back -->
+      <a href="/index.html" class="back-home-button">
+        Back to home
+      </a>      
+    
+    <div id="detail-map-container">
+      <div id="detail-map"></div>
+      
+      <!-- Contenitore lista siti + grafico (generato dinamicamente) -->
+      <div id="site-list-container">
+        <!-- Il contenuto sarà generato dinamicamente da dettaglio.js -->
+      </div>
+    </div>
+    
+    <!-- Grafico principale (nascosto) -->
+    <div id="detail-chart" style="display:none;"></div>
+  </div>
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+  <!-- Componenti interni -->
+  <script type="module" src="dettaglio.js"></script>
+</body>
+</html>

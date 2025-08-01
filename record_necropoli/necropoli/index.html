@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pianta del sito</title>
+  <link rel="stylesheet" href="../css/record_necropoli.css" />
+  <link rel="stylesheet" href="../css/site_graph.css" />
+  <link rel="stylesheet" href="../css/popup_object.css" />
+  <link rel="stylesheet" href="../css/affinity.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/georaster"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+  <div id="dashboard">
+    <a id="logo-link" href="#">
+      <img id="dashboard-logo" />
+    </a>
+
+    <script type="module">
+      import { getPath } from '../../path_utils.js';
+
+      // Set dinamico dei percorsi per logo e link
+      document.getElementById('logo-link').href = getPath("index.html");
+      document.getElementById('dashboard-logo').src = getPath("images/logo_semplificato.png");
+
+      const infoLink = document.getElementById('info-link');
+      if (infoLink) infoLink.href = getPath("./info/info.html");
+    </script>
+
+    <div class="dashboard-section" id="visualization-controls">
+      <h3>Layer's on map</h3>
+      <div class="control-item">
+        <label class="switch">
+          <input type="checkbox" id="toggle-raster" checked>
+          <span class="slider round"></span>
+        </label>
+        <span>Site's map</span>
+      </div>
+      <div class="control-item">
+        <label class="switch">
+          <input type="checkbox" id="toggle-oggetti" checked>
+          <span class="slider round"></span>
+        </label>
+        <span>Objects</span>
+      </div>
+    </div>
+
+    <div class="dashboard-section" id="site-chart-section" x-data="{ open: false, rendered: false }">
+      <h3 @click="open = !open; if (!rendered) { window.renderSiteGraphLazy(); rendered = true; }" style="cursor: pointer;">
+        Tomb's Types
+        <span x-text="open ? '▲' : '▼'" style="float: right; font-size: 14px;"></span>
+      </h3>
+      <div id="site-chart-container" x-show="open" x-transition>
+        <canvas id="siteChartCanvas" width="300" height="300"></canvas>
+      </div>
+    </div>    
+
+    <div class="dashboard-section" id="analysis-tools">
+      <h3>Analysis Tool</h3>
+      <div class="control-item">
+        <label class="switch">
+          <input type="checkbox" id="toggle-affinity">
+          <span class="slider round"></span>
+        </label>
+        <span>Affinity Analysis</span>
+      </div>
+      <div id="affinity-results" class="hidden">
+        <!-- Risultati dell'analisi verranno mostrati qui -->
+      </div>
+    </div>   
+
+    <div class="dashboard-section" id="info-section">
+      <a href="#" class="info-link" id="info-link">ℹ️ Info Page</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Script principali -->
+  <script type="module" src="map_viewer.js"></script>
+  <script type="module">
+    import { renderSiteGraph } from './site_graph.js';
+    import { Tutorial } from './tutorial_necropoli.js';
+
+    window.renderSiteGraphLazy = renderSiteGraph;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        new Tutorial();
+      }, 500);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oggetto del Corredo</title>
+  <link rel="stylesheet" href="./record_object.css">
+</head>
+<body>
+
+  <div class="record-container">
+    <div class="info-box" id="object-info">
+      <h1 id="sigla">Loading...</h1>
+      <h2 id="original_description"></h2>
+      <div id="fields"></div>
+      
+      <!-- Sezione: Oggetti nella stessa tomba -->
+      <details class="collapsible">
+        <summary>Objects from the same tomb</summary>
+        <div class="collapsible-content">
+          <div id="same-tomb" class="object-list"></div>
+        </div>
+      </details>
+
+      <!-- Sezione: Oggetti affini -->
+      <details class="collapsible" id="similar-objects-section" open>
+        <summary>Automatically Generated Related objects</summary>
+<div class="collapsible-content">
+  <div class="affinity-controls">
+    <div class="affinity-range">
+      <span>Show affinity between</span>
+      <input type="number" id="min-affinity" min="0" max="100" value="0" placeholder="Min %">
+      <span>-</span>
+      <input type="number" id="max-affinity" min="0" max="100" value="100" placeholder="Max %">
+    </div>
+    <button id="toggle-affinity-settings" class="settings-toggle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="..."></path>
+      </svg>
+      Customize
+    </button>
+  </div>
+
+  <div id="similar-objects" class="object-list"></div>
+  <button id="show-more-btn" class="show-more-btn">Show more objects</button>
+</div>
+      </details>
+    </div>
+
+    <div class="image-box">
+      <div id="object-images">
+        <!-- Immagini inserite via JS -->
+      </div>
+      
+      <div class="sidebar-controls">
+        <div id="affinity-settings-panel" class="affinity-settings-panel" style="display: none;">
+          <h4>Adjust the weights</h4>
+          <div id="affinity-sliders"></div>
+          <button id="apply-affinity-settings" class="apply-btn">Apply</button>
+        </div>        
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="./tutorial_record_object.js"></script>
+  <script type="module" src="./record_object.js"></script>
+</body>
+</html>
