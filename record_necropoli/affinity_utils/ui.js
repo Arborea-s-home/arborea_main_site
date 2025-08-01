@@ -122,7 +122,9 @@ export function renderDashboardUI(dashboard) {
 
 <!-- LISTA AFFINITÀ -->
 <div class="affinity-list">
-    `;
+  <button id="open-all-affinities" class="btn-show-all-matches">
+    Show all matches
+  </button>    `;
 
     // pop-up per il grafico (inizialmente nascosto)
     html += `

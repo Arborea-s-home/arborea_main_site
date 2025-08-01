@@ -33,7 +33,7 @@ export class Tutorial {
           content: "Click on any region to see a graph showing the importance of each selected archaeological feature. This importance is calculated by comparing the absolute presence of each feature against the weighted average of the same phenomenon across all regions.",
           target: null,
           position: "center",
-          image: getPath("images/graph.png")
+          image: "images/graph.png"
         },
         {
           title: "Info Page",

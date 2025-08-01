@@ -306,6 +306,10 @@ import { getPath } from '../../path_utils.js';
 
     aggiornaGestioneClickTombe();
 
+    if (typeof affinityDashboard.onAffinityModeChange === 'function') {
+        affinityDashboard.onAffinityModeChange(isActive);
+    }
+    
     // Accendi/spegni toggle
 
     if (!isActive) {
