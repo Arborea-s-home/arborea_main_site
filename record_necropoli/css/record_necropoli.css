@@ -861,3 +861,99 @@ input:checked + .slider:before {
     .tutorial-close:hover {
       background-color: #c0392b;
     }
+
+    /* ============================================================
+   SLIDER PRECISIONE – Single bar con due thumb (namespac-ato)
+   Scala colori: 0 azzurro, 1 verde, 2 giallo, 3 arancione, 4 rosso
+   ============================================================ */
+   #dashboard .precision-compact{ padding:14px 12px 22px; }
+
+   #dashboard .precision-header{
+     position:relative;
+     display:flex; align-items:center; gap:10px; justify-content:space-between;
+     margin-bottom:32px; /* spazio extra tra titolo e barra */
+   }
+   
+   #dashboard .precision-title{ font-weight:600; }
+   
+   /* Contenitore della barra (alto per ospitare le bolle sopra) */
+   #dashboard .precision-range{
+     position:relative;
+     height:56px;
+     margin-top:0;
+   }
+   
+   /* Track: gradiente continuo 0→4 (azzurro→verde→giallo→arancio→rosso) */
+   #dashboard .precision-range .range-track{
+     position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
+     height:14px; border-radius:999px;
+     background: linear-gradient(90deg,
+       #60a5fa 0%,
+       #22c55e 25%,
+       #facc15 50%,
+       #f59e0b 75%,
+       #ef4444 100%
+     );
+     box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+   }
+   
+   /* Fill centrale selezionato */
+   #dashboard .precision-range .range-fill{
+     position:absolute; top:50%; transform:translateY(-50%); height:14px; border-radius:999px;
+     background:rgba(255,255,255,.18);
+     box-shadow: inset 0 0 0 2px rgba(255,255,255,.65), 0 0 0 1px rgba(0,0,0,.08);
+     pointer-events:none;
+   }
+   
+   /* Nascondi le tracce native e lascia solo i thumb */
+   #dashboard .precision-range input[type="range"]{
+     position:absolute; left:0; right:0; top:0; bottom:0;
+     width:100%; height:56px; margin:0; background:transparent;
+     pointer-events:none; -webkit-appearance:none; appearance:none; border:0; outline:0;
+   }
+   #dashboard .precision-range input[type="range"]::-webkit-slider-runnable-track{ background:transparent; border:0; }
+   #dashboard .precision-range input[type="range"]::-moz-range-track{ background:transparent; border:0; }
+   #dashboard .precision-range input[type="range"]::-ms-track{ background:transparent; border-color:transparent; color:transparent; }
+   
+   /* Thumb */
+   #dashboard .precision-range input[type="range"]::-webkit-slider-thumb{
+     pointer-events:all; -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+     background:#fff; border:2px solid #d1d5db; box-shadow:0 1px 6px rgba(0,0,0,.2);
+   }
+   #dashboard .precision-range input[type="range"]::-moz-range-thumb{
+     pointer-events:all; width:22px; height:22px; border:none; border-radius:50%;
+     background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.2);
+   }
+   
+   /* Bubbles sopra i thumb*/
+   #dashboard .thumb-bubble{
+     position:absolute; top:-34px; transform:translateX(-50%);
+     padding:2px 8px; font-size:12px; font-weight:700; color:#fff;
+     border-radius:14px; line-height:18px; white-space:nowrap;
+     box-shadow:0 1px 6px rgba(0,0,0,.18);
+   }
+   #dashboard .bubble-min{ background:linear-gradient(135deg,#4f46e5,#5691ff); }
+   #dashboard .bubble-max{ background:linear-gradient(135deg,#0ea5a4,#22c1c3); }
+   #dashboard .thumb-bubble::after{
+     content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px;
+     transform:translateX(-50%) rotate(45deg); background:inherit; border-radius:2px;
+   }
+   
+   /* Help + tooltip accessibile */
+   #dashboard .dq-help{
+     border:0; background:#eef2ff; color:#374151; width:22px; height:22px;
+     border-radius:999px; font-weight:700; line-height:22px; text-align:center;
+     cursor:help; box-shadow:0 1px 2px rgba(0,0,0,.08);
+   }
+   #dashboard .dq-tooltip{
+     position:absolute; right:42px; top:100%; margin-top:8px;
+     background:#fff; color:#111827; border:1px solid #e5e7eb; border-radius:8px;
+     padding:10px 12px; font-size:12.5px; line-height:1.35; width:240px;
+     box-shadow:0 8px 24px rgba(0,0,0,.08); display:none; z-index:10;
+   }
+   #dashboard .dq-tooltip::before{
+     content:""; position:absolute; right:10px; top:-6px; width:10px; height:10px;
+     transform:rotate(45deg); background:#fff; border-left:1px solid #e5e7eb; border-top:1px solid #e5e7eb;
+   }
+   #dashboard .dq-help:hover + .dq-tooltip,
+   #dashboard .dq-help:focus + .dq-tooltip{ display:block; } 
