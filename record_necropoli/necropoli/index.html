@@ -52,6 +52,37 @@
       </div>
     </div>
 
+    <!-- Reliability range (compatto, come WT1) -->
+    <div class="precision-compact">
+      <div class="precision-header">
+        <span class="precision-title">Data reliability (affidabilità)</span>
+
+        <!-- tooltip (facoltativo) -->
+        <button class="dq-help" aria-describedby="dq-tip" aria-label="Come leggere i valori">?</button>
+        <div class="dq-tooltip" id="dq-tip" role="tooltip">
+          <strong>0</strong> altissima affidabilità<br>
+          <strong>1</strong> alta affidabilità<br>
+          <strong>2</strong> media affidabilità<br>
+          <strong>3</strong> bassa affidabilità<br>
+          <strong>4</strong> molto bassa / dubbia
+        </div>
+
+        <span class="precision-range-chip" id="precision-range-label">0–4</span>
+      </div>
+
+      <div class="precision-range" id="precision-range">
+        <div class="range-track"></div>
+        <div class="range-fill" id="precision-range-fill"></div>
+
+        <span class="thumb-bubble bubble-min" id="prec-bubble-min">0</span>
+        <span class="thumb-bubble bubble-max" id="prec-bubble-max">4</span>
+
+        <!-- NB: riutilizziamo gli stessi ID di WT1 per compatibilità JS/CSS -->
+        <input type="range" id="precision-min" min="0" max="4" step="1" value="0" aria-label="min affidabilita">
+        <input type="range" id="precision-max" min="0" max="4" step="1" value="4" aria-label="max affidabilita">
+      </div>
+    </div>
+
     <div class="dashboard-section" id="site-chart-section" x-data="{ open: false, rendered: false }">
       <h3 @click="open = !open; if (!rendered) { window.renderSiteGraphLazy(); rendered = true; }" style="cursor: pointer;">
         Tomb's Types

@@ -7,333 +7,364 @@ import { createTombaPopup } from './popup_tombe.js';
 import { getPath } from '../../path_utils.js';
 
 (async () => {
-    const params = new URLSearchParams(window.location.search);
-    const fid = params.get("fid");
+  const params = new URLSearchParams(window.location.search);
+  const fid = params.get("fid");
+  if (!fid) {
+    alert("Parametro 'fid' mancante");
+    return;
+  }
 
-    if (!fid) {
-        alert("Parametro 'fid' mancante");
-        return;
-    }
+  const affinityDashboard = initAffinityDashboard();
 
-    // Inizializza dashboard affinità
-    const affinityDashboard = initAffinityDashboard();
+  // === Sito + raster ===
+  const sitiResponse = await fetch(getPath("data/siti.geojson"));
+  const sitiData = await sitiResponse.json();
+  const site = sitiData.features.find(f => f.properties.fid == fid);
+  if (!site || !site.properties.map) {
+    alert("Sito non trovato o mappa mancante");
+    return;
+  }
+  const coords = site.geometry.coordinates;
+  const mapFile = site.properties.map.toLowerCase().replace(/\.tif$/i, '') + ".tif";
 
-    // Caricamento dati
-    const sitiResponse = await fetch(getPath("data/siti.geojson"));
-    const sitiData = await sitiResponse.json();
+  const map = L.map("map", { minZoom: 15, maxZoom: 22 }).setView([coords[1], coords[0]], 18);
 
-    const site = sitiData.features.find(f => f.properties.fid == fid);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; <a href="https://carto.com/">CartoDB</a>'
+  }).addTo(map);
 
-    if (!site || !site.properties.map) {
-        alert("Sito non trovato o mappa mancante");
-        return;
-    }
+  const tiffResponse = await fetch(getPath(`images/maps/${mapFile}`));
+  if (!tiffResponse.ok) throw new Error("GeoTIFF non trovato: " + mapFile);
+  const arrayBuffer = await tiffResponse.arrayBuffer();
+  const georaster = await parseGeoraster(arrayBuffer);
+  const rasterLayer = new GeoRasterLayer({ georaster, opacity: 0.7, resolution: 256 });
+  rasterLayer.addTo(map);
+  map.fitBounds(rasterLayer.getBounds());
 
-    const coords = site.geometry.coordinates;
-    const siteName = site.properties.placeName;
-    const mapFile = site.properties.map.toLowerCase().replace(/\.tif$/i, '') + ".tif";
+  // === Tombe & Oggetti (base, senza filtro affidabilità) ===
+  const tombeResponse = await fetch(getPath("data/tombe.geojson"));
+  const tombeData = await tombeResponse.json();
+  const tombeBase = tombeData.features.filter(t =>
+    t.properties.sito_id == fid && t.properties.parent_ID == null
+  );
 
+  const oggettiResponse = await fetch(getPath("data/oggetti.geojson"));
+  const oggettiData = await oggettiResponse.json();
+  const nomiTombeBase = new Set(tombeBase.map(t => (t.properties.name || '').trim()));
+  const oggettiBase = oggettiData.features.filter(o =>
+    nomiTombeBase.has((o.properties.tomba || '').trim())
+  );
 
-    // Inizializzazione mappa
-    const map = L.map("map", {
-        minZoom: 15,
-        maxZoom: 22,
-    }).setView([coords[1], coords[0]], 18);
+  // Grafico (dataset base)
+  window.renderSiteGraphLazy = () => renderSiteGraph(tombeBase);
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://carto.com/">CartoDB</a>'
-    }).addTo(map);
+  // Affinità (dataset base)
+  const calcola = calcolaAffinitaTombe({ features: tombeBase }, { features: oggettiBase });
 
-    // === Raster GeoTIFF ===
-    const tiffResponse = await fetch(getPath(`images/maps/${mapFile}`));
-    if (!tiffResponse.ok) throw new Error("GeoTIFF non trovato: " + mapFile);
-    const arrayBuffer = await tiffResponse.arrayBuffer();
-    const georaster = await parseGeoraster(arrayBuffer);
-
-    const rasterLayer = new GeoRasterLayer({
-        georaster,
-        opacity: 0.7,
-        resolution: 256
+  // Associazione oggetti→tomba (utility)
+  function buildOggettiPerTomba(features) {
+    const m = {};
+    features.forEach(obj => {
+      const key = (obj.properties.tomba || '').trim();
+      if (!key) return;
+      if (!m[key]) m[key] = [];
+      m[key].push(obj);
     });
+    return m;
+  }
 
-    rasterLayer.addTo(map);
-    map.fitBounds(rasterLayer.getBounds());
+  // ====== Slider Affidabilità (0..4) ======
+  const AFF_MIN = 0, AFF_MAX = 4, AFF_STEP = 1;
+  const precMinInput = document.getElementById('precision-min');
+  const precMaxInput = document.getElementById('precision-max');
+  const precRangeLbl = document.getElementById('precision-range-label');
+  const rangeFillEl  = document.getElementById('precision-range-fill');
+  const bubbleMin    = document.getElementById('prec-bubble-min');
+  const bubbleMax    = document.getElementById('prec-bubble-max');
+  const rangeEl      = document.getElementById('precision-range');
 
-    // === Carica tombe.geojson ===
-    const tombeResponse = await fetch(getPath("data/tombe.geojson"));
-    const tombeData = await tombeResponse.json();
-    const tombeDelSito = tombeData.features.filter(t =>
-        t.properties.sito_id == fid && t.properties.parent_ID == null
-    );
-    const nomiTombe = tombeDelSito.map(t => t.properties.name);
+  let currentAffMin = AFF_MIN;
+  let currentAffMax = AFF_MAX;
 
-    // Grafico tombe nella dashboard
+  [precMinInput, precMaxInput].forEach(el => {
+    if (!el) return;
+    el.min = String(AFF_MIN);
+    el.max = String(AFF_MAX);
+    el.step = String(AFF_STEP);
+  });
 
-    window.renderSiteGraphLazy = () => renderSiteGraph(tombeDelSito);
-    window.__COLOR_TOMBE__ = colorTombeByAffinity;
-
-
-    // === Carica oggetti.geojson ===
-    const oggettiResponse = await fetch(getPath("data/oggetti.geojson"));
-    const oggettiData = await oggettiResponse.json();
-    const oggettiDelSito = oggettiData.features.filter(o =>
-        nomiTombe.includes(o.properties.tomba)
-    );
-
-    // calcolo affinita
-
-    const calcola = calcolaAffinitaTombe(
-        { features: tombeDelSito },
-        { features: oggettiDelSito }
-    );
-
-    // === Mappa oggetti per tomba ===
-    const oggettiPerTomba = {};
-    oggettiDelSito.forEach(obj => {
-        const tomba = obj.properties.tomba;
-        if (!tomba) return;
-        if (!oggettiPerTomba[tomba]) oggettiPerTomba[tomba] = [];
-        oggettiPerTomba[tomba].push(obj);
-    });
-
-    // === Layer tombe con popup dinamici ===
-    const tombeLayer = L.geoJSON(tombeDelSito, {
-        style: {
-            color: "#993300",
-            weight: 2,
-            fillOpacity: 0.3
-        },
-        onEachFeature: (feature, layer) => {
-            const tombaId = feature.properties.name;
-            const oggetti = oggettiPerTomba[tombaId] || [];
-            const popupDiv = createTombaPopup(feature, oggetti);
-            layer.on("click", (e) => {
-                if (affinityDashboard.active) {
-                    e.originalEvent.preventDefault();
-                    e.originalEvent.stopPropagation();
-                    return;
-                }
-                layer.bindPopup(popupDiv).openPopup();
-            });
-        }
-    }).addTo(map);
-
-    aggiornaGestioneClickTombe();
-
-    function aggiornaGestioneClickTombe() {
-        tombeLayer.eachLayer(layer => {
-            layer.off("click"); // Rimuove eventuali click precedenti
-    
-            const tombaId = layer.feature.properties.name;
-            const oggetti = oggettiPerTomba[tombaId] || [];
-    
-            if (affinityDashboard.active) {
-                layer.on("click", (e) => {
-                    if (e.originalEvent && e.originalEvent.target.closest('.leaflet-popup, .leaflet-control')) return;
-    
-                    console.log("🟡 Modalità affinità attiva - Click su tomba:", tombaId);
-    
-                    const risultati = calcola(layer.feature.properties.fid);
-                    const max = Math.max(...risultati.map(r => r.affinita));
-    
-                    tombeLayer.eachLayer(layerAltro => {
-                        const fidAltro = layerAltro.feature.properties.fid;
-                        const r = risultati.find(r => r.fid === fidAltro);
-                        if (r) {
-                            const perc = r.affinita / max;
-                            const hue = 240 - (perc * 240);
-                            const color = `hsl(${hue}, 100%, 50%)`;
-                            layerAltro.setStyle({
-                                fillColor: color,
-                                fillOpacity: 0.7,
-                                color: '#b00',
-                                weight: 1.5
-                            });
-                        } else {
-                            layerAltro.setStyle({
-                                fillColor: "#f5f5f5",
-                                fillOpacity: 0.3,
-                                color: '#999',
-                                weight: 1
-                            });
-                        }
-                    });
-    
-                    affinityDashboard.displayResults(risultati, layer.feature, tombeDelSito);
-                });
-            } else {
-                const popupDiv = createTombaPopup(layer.feature, oggetti);
-                layer.on("click", (e) => {
-                    layer.bindPopup(popupDiv).openPopup();
-                });
-            }
-        });
-    }   
-
-    // === Layer oggetti ===
-    let clusterGroup = addObjectsLayer(map, oggettiDelSito);
-
-    // Inizializza barra dei filtri
-    initCategoryFilter(oggettiDelSito, (oggettiFiltrati) => {
-        if (map.hasLayer(clusterGroup)) {
-            map.removeLayer(clusterGroup);
-        }
-        clusterGroup = addObjectsLayer(map, oggettiFiltrati);
-    });
-
-    // === Gestione click per affinità ===
-    function getFeatureAtLatLng(latlng, layerGroup) {
-        let found = null;
-        layerGroup.eachLayer(layer => {
-            if (layer.getBounds && layer.getBounds().contains(latlng)) {
-                found = layer;
-            }
-        });
-        return found;
+  const pct = (v) => ((v - AFF_MIN) / (AFF_MAX - AFF_MIN)) * 100;
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function snapToStep(v) {
+    const snapped = Math.round((v - AFF_MIN) / AFF_STEP) * AFF_STEP + AFF_MIN;
+    return clamp(snapped, AFF_MIN, AFF_MAX);
+  }
+  function updateAffUI() {
+    if (precRangeLbl) {
+      precRangeLbl.textContent = (currentAffMin === currentAffMax)
+        ? `${currentAffMin}` : `${currentAffMin}–${currentAffMax}`;
     }
+    const left  = pct(currentAffMin);
+    const right = pct(currentAffMax);
+    if (rangeFillEl) {
+      rangeFillEl.style.left  = `calc(${left}% )`;
+      rangeFillEl.style.width = `calc(${Math.max(0, right - left)}% )`;
+    }
+    if (bubbleMin) { bubbleMin.style.left = `calc(${left}% )`;  bubbleMin.textContent = String(currentAffMin); }
+    if (bubbleMax) { bubbleMax.style.left = `calc(${right}% )`; bubbleMax.textContent = String(currentAffMax); }
+  }
+  function withinAffidabilita(val) {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return false;
+    if (n < AFF_MIN || n > AFF_MAX) return false;
+    return (n >= currentAffMin && n <= currentAffMax);
+  }
 
-    function colorTombeByAffinity(baseFeature) {
-        const risultati = calcola(baseFeature.properties.fid);
-        const max = Math.max(...risultati.map(r => r.affinita));
-    
-        tombeLayer.eachLayer(layer => {
-            const fidAltro = layer.feature.properties.fid;
-            const r = risultati.find(r => r.fid === fidAltro);
-            if (r) {
-                const perc = r.affinita / max;
-                const hue = 240 - (perc * 240);
-                const color = `hsl(${hue}, 100%, 50%)`;
-                layer.setStyle({
-                    fillColor: color,
-                    fillOpacity: 0.7,
-                    color: '#b00',
-                    weight: 1.5
-                });
-            } else {
-                layer.setStyle({
-                    fillColor: "#f5f5f5",
-                    fillOpacity: 0.3,
-                    color: '#999',
-                    weight: 1
-                });
-            }
-        });
-    
-        affinityDashboard.displayResults(risultati, baseFeature, tombeDelSito);
-    }    
+  // ====== LAYERS dinamici ======
+  let tombeLayer = null;
+  let objectsMgr = null; // ⬅️ manager a bucket
 
-    map.on("click", function (e) {
-        if (!affinityDashboard.active) return;
-    
-        if (e.originalEvent && e.originalEvent.target.closest('.leaflet-popup, .leaflet-control')) {
-            console.log("⛔ Click su popup o controllo UI ignorato");
+  function makeTombeLayer(tombeFeatures, oggettiPerTomba) {
+    if (tombeLayer) { try { map.removeLayer(tombeLayer); } catch {} tombeLayer = null; }
+    tombeLayer = L.geoJSON(tombeFeatures, {
+      style: { color: "#993300", weight: 2, fillOpacity: 0.3 },
+      onEachFeature: (feature, layer) => {
+        const tombaId = feature.properties.name;
+        const oggetti = oggettiPerTomba[tombaId] || [];
+        const popupDiv = createTombaPopup(feature, oggetti);
+        layer.on("click", (e) => {
+          if (affinityDashboard.active) {
+            e.originalEvent?.preventDefault();
+            e.originalEvent?.stopPropagation();
             return;
-        }
-    
-        console.log("🟡 Modalità affinità attiva - Click rilevato");
-    
-        const layerClicked = getFeatureAtLatLng(e.latlng, tombeLayer);
-        if (!layerClicked) {
-            alert("Clicca su una tomba valida.");
-            console.warn("❌ Nessuna tomba trovata al click");
-            return;
-        }
-    
-        console.log("✅ Tomba selezionata:", layerClicked.feature.properties.name);
-    
-        const fid = layerClicked.feature.properties.fid;
-    
-        const risultati = calcola(fid);
-    
-        const max = Math.max(...risultati.map(r => r.affinita));
-        tombeLayer.eachLayer(layer => {
-            const fidAltro = layer.feature.properties.fid;
-            const r = risultati.find(r => r.fid === fidAltro);
-            if (r) {
-                const perc = r.affinita / max;
-                const hue = 240 - (perc * 240);
-                const saturation = 100;
-                const lightness = 50; 
-                const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-        
-                layer.setStyle({ 
-                    fillColor: color, 
-                    fillOpacity: 0.7,
-                    color: '#b00',
-                    weight: 1.5
-                });
-            } else {
-                layer.setStyle({ 
-                    fillColor: "#f5f5f5",
-                    fillOpacity: 0.3,
-                    color: '#999',
-                    weight: 1
-                });
-            }
-        });  
-
-        // Mostra risultati nella dashboard
-        affinityDashboard.displayResults(risultati, layerClicked.feature, tombeDelSito);
-    });  
-
-        // === Switch toggle visibilità layer ===
-        const toggleRaster = document.getElementById('toggle-raster');
-        const toggleOggetti = document.getElementById('toggle-oggetti');
-
-        if (toggleRaster && toggleOggetti) {
-            toggleRaster.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    map.addLayer(rasterLayer);
-                } else {
-                    map.removeLayer(rasterLayer);
-                }
-            });
-
-            toggleOggetti.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                map.addLayer(clusterGroup);
-                } else {
-                map.removeLayer(clusterGroup);
-                }
-            });
-        } else {
-            console.warn("Toggle raster/oggetti non trovati nel DOM");
-        }
-
-    // === Gestione toggle affinità nella dashboard ===
-    document.getElementById('toggle-affinity').addEventListener('change', function(e) {
-    const isActive = affinityDashboard.toggleAffinityMode();
-
+          }
+          layer.bindPopup(popupDiv).openPopup();
+        });
+      }
+    }).addTo(map);
     aggiornaGestioneClickTombe();
+  }
 
-    if (typeof affinityDashboard.onAffinityModeChange === 'function') {
+  // ====== Categoria + Affidabilità: NUOVA LOGICA ======
+  let lastCategorySubset = oggettiBase.slice();
+
+  // Costruisce/ricostruisce i marker SOLO quando cambia la categoria.
+  function rebuildObjectsForCategory() {
+    // distruggi manager precedente
+    if (objectsMgr) { objectsMgr.destroy?.(); objectsMgr = null; }
+    // costruisci NUOVO manager con il subset categoria
+    objectsMgr = addObjectsLayer(map, lastCategorySubset);
+    // applica range corrente (leggero: add/remove bucket)
+    const oggToggle = document.getElementById('toggle-oggetti');
+    const shouldShow = !oggToggle || oggToggle.checked;
+    objectsMgr.setVisible(!!shouldShow);
+    objectsMgr.applyRange(currentAffMin, currentAffMax);
+  }
+
+  // Applicazione range: leggero (toggle bucket) + ricostruzione TOMBE (poche)
+  function applyAffRangeToMap() {
+    // oggetti (leggero: solo bucket)
+    if (objectsMgr) objectsMgr.applyRange(currentAffMin, currentAffMax);
+
+    // tombe (filtrate su affidabilita_dato)
+    const tombeFiltered = tombeBase.filter(t => withinAffidabilita(t?.properties?.affidabilita_dato));
+    // oggetti per popup (filtrati con range su subset categoria)
+    const oggettiFiltered = lastCategorySubset.filter(f => withinAffidabilita(f?.properties?.affidabilita));
+    const oggettiPerTomba = buildOggettiPerTomba(oggettiFiltered);
+    makeTombeLayer(tombeFiltered, oggettiPerTomba);
+  }
+
+  // Inizializza filtro categorie
+  initCategoryFilter(oggettiBase, (oggettiFiltratiPerCategoria) => {
+    lastCategorySubset = oggettiFiltratiPerCategoria.slice();
+    rebuildObjectsForCategory();  // costoso (una volta per cambio categoria)
+    applyAffRangeToMap();         // leggero
+  });
+
+  // ---- Slider affidabilità (debounce soft + apply on pointerup) ----
+  let affApplyTimer = null;
+  function normalizeAndApply(light = false) {
+    if (!precMinInput || !precMaxInput) return;
+    const aRaw = Number(precMinInput.value);
+    const bRaw = Number(precMaxInput.value);
+    let a = Number.isFinite(aRaw) ? snapToStep(aRaw) : AFF_MIN;
+    let b = Number.isFinite(bRaw) ? snapToStep(bRaw) : AFF_MAX;
+    if (a > b) [a, b] = [b, a];
+    currentAffMin = a; currentAffMax = b;
+    precMinInput.value = String(a);
+    precMaxInput.value = String(b);
+    updateAffUI();
+
+    clearTimeout(affApplyTimer);
+    const delay = light ? 60 : 120; // un filo più rilassato
+    affApplyTimer = setTimeout(() => applyAffRangeToMap(), delay);
+  }
+  precMinInput?.addEventListener('input', () => normalizeAndApply(true));
+  precMaxInput?.addEventListener('input', () => normalizeAndApply(true));
+
+  // Applica “definitivo” a fine drag per UX più fluida
+  ['pointerup','change'].forEach(ev => {
+    precMinInput?.addEventListener(ev, () => normalizeAndApply(false));
+    precMaxInput?.addEventListener(ev, () => normalizeAndApply(false));
+  });
+
+  // click sulla track: sposta il thumb più vicino
+  if (rangeEl) {
+    rangeEl.addEventListener('pointerdown', (e) => {
+      const rect = rangeEl.getBoundingClientRect();
+      const x = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+      const raw = AFF_MIN + x * (AFF_MAX - AFF_MIN);
+      const value = snapToStep(raw);
+      const distMin = Math.abs(value - currentAffMin);
+      const distMax = Math.abs(value - currentAffMax);
+      const target  = (distMin <= distMax) ? precMinInput : precMaxInput;
+      target.value = String(value);
+      normalizeAndApply(true);
+    });
+  }
+
+  // Avvio iniziale
+  updateAffUI();
+  rebuildObjectsForCategory(); // costruzione iniziale
+  applyAffRangeToMap();        // mount bucket ammessi + tombe
+
+  // =========================
+  // Gestione affinità
+  // =========================
+  function getFeatureAtLatLng(latlng, layerGroup) {
+    let found = null;
+    layerGroup.eachLayer(layer => {
+      if (layer.getBounds && layer.getBounds().contains(latlng)) found = layer;
+    });
+    return found;
+  }
+
+  function colorTombeByAffinity(baseFeature) {
+    const risultati = calcola(baseFeature.properties.fid);
+    const max = Math.max(...risultati.map(r => r.affinita));
+    tombeLayer.eachLayer(layer => {
+      const fidAltro = layer.feature.properties.fid;
+      const r = risultati.find(rr => rr.fid === fidAltro);
+      if (r) {
+        const perc = r.affinita / max;
+        const hue = 240 - (perc * 240);
+        const color = `hsl(${hue}, 100%, 50%)`;
+        layer.setStyle({ fillColor: color, fillOpacity: 0.7, color: '#b00', weight: 1.5 });
+      } else {
+        layer.setStyle({ fillColor: "#f5f5f5", fillOpacity: 0.3, color: '#999', weight: 1 });
+      }
+    });
+    affinityDashboard.displayResults(risultati, baseFeature, tombeBase);
+  }
+  window.__COLOR_TOMBE__ = colorTombeByAffinity;
+
+  function aggiornaGestioneClickTombe() {
+    if (!tombeLayer) return;
+    tombeLayer.eachLayer(layer => {
+      layer.off("click");
+      const tombaId = layer.feature.properties.name;
+      const oggettiPerTomba = buildOggettiPerTomba(
+        lastCategorySubset.filter(f => withinAffidabilita(f?.properties?.affidabilita))
+      );
+      const oggetti = oggettiPerTomba[tombaId] || [];
+
+      if (affinityDashboard.active) {
+        layer.on("click", (e) => {
+          if (e.originalEvent && e.originalEvent.target.closest('.leaflet-popup, .leaflet-control')) return;
+
+          const risultati = calcola(layer.feature.properties.fid);
+          const max = Math.max(...risultati.map(r => r.affinita));
+
+          tombeLayer.eachLayer(layerAltro => {
+            const fidAltro = layerAltro.feature.properties.fid;
+            const r = risultati.find(rr => rr.fid === fidAltro);
+            if (r) {
+              const perc = r.affinita / max;
+              const hue = 240 - (perc * 240);
+              const color = `hsl(${hue}, 100%, 50%)`;
+              layerAltro.setStyle({ fillColor: color, fillOpacity: 0.7, color: '#b00', weight: 1.5 });
+            } else {
+              layerAltro.setStyle({ fillColor: "#f5f5f5", fillOpacity: 0.3, color: '#999', weight: 1 });
+            }
+          });
+
+          affinityDashboard.displayResults(risultati, layer.feature, tombeBase);
+        });
+      } else {
+        const popupDiv = createTombaPopup(layer.feature, oggetti);
+        layer.on("click", () => { layer.bindPopup(popupDiv).openPopup(); });
+      }
+    });
+  }
+
+  map.on("click", function (e) {
+    if (!affinityDashboard.active || !tombeLayer) return;
+    if (e.originalEvent && e.originalEvent.target.closest('.leaflet-popup, .leaflet-control')) return;
+
+    const layerClicked = getFeatureAtLatLng(e.latlng, tombeLayer);
+    if (!layerClicked) {
+      alert("Clicca su una tomba valida.");
+      return;
+    }
+
+    const risultati = calcola(layerClicked.feature.properties.fid);
+    const max = Math.max(...risultati.map(r => r.affinita));
+    tombeLayer.eachLayer(layer => {
+      const fidAltro = layer.feature.properties.fid;
+      const r = risultati.find(rr => rr.fid === fidAltro);
+      if (r) {
+        const perc = r.affinita / max;
+        const hue = 240 - (perc * 240);
+        const color = `hsl(${hue}, 100%, 50%)`;
+        layer.setStyle({ fillColor: color, fillOpacity: 0.7, color: '#b00', weight: 1.5 });
+      } else {
+        layer.setStyle({ fillColor: "#f5f5f5", fillOpacity: 0.3, color: '#999', weight: 1 });
+      }
+    });
+    affinityDashboard.displayResults(risultati, layerClicked.feature, tombeBase);
+  });
+
+  // =========================
+  // Toggle layer
+  // =========================
+  const toggleRaster  = document.getElementById('toggle-raster');
+  const toggleOggetti = document.getElementById('toggle-oggetti');
+
+  if (toggleOggetti) {
+    toggleOggetti.addEventListener('change', (e) => {
+      if (!objectsMgr) return;
+      objectsMgr.setVisible(!!e.target.checked); // mostra/nasconde bucket già attivi
+    });
+  } else {
+    console.warn("Toggle oggetti non trovato nel DOM");
+  }
+
+  if (toggleRaster) {
+    toggleRaster.addEventListener('change', (e) => {
+      if (e.target.checked) map.addLayer(rasterLayer);
+      else map.removeLayer(rasterLayer);
+    });
+  } else {
+    console.warn("Toggle raster non trovato nel DOM");
+  }
+
+  // =========================
+  // Toggle affinità
+  // =========================
+  const toggleAffinity = document.getElementById('toggle-affinity');
+  if (toggleAffinity) {
+    toggleAffinity.addEventListener('change', function () {
+      const isActive = affinityDashboard.toggleAffinityMode();
+      aggiornaGestioneClickTombe();
+      if (typeof affinityDashboard.onAffinityModeChange === 'function') {
         affinityDashboard.onAffinityModeChange(isActive);
-    }
-    
-    // Accendi/spegni toggle
-
-    if (!isActive) {
+      }
+      if (!isActive && tombeLayer) {
         tombeLayer.eachLayer(layer => {
-            layer.setStyle({ 
-                fillColor: "#993300", 
-                fillOpacity: 0.3,
-                color: "#993300",
-                weight: 2
-            });
+          layer.setStyle({ fillColor: "#993300", fillOpacity: 0.3, color: "#993300", weight: 2 });
         });
-    }
-
-    if (!isActive) {
-        affinityDashboard.hideUI();
-
-        tombeLayer.eachLayer(layer => {
-            layer.setStyle({ 
-                fillColor: "#993300", 
-                fillOpacity: 0.3,
-                color: "#993300",
-                weight: 2
-            });
-        });
-    }
-});
+        affinityDashboard.hideUI?.();
+      }
+    });
+  }
 })();

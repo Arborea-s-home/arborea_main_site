@@ -180,3 +180,35 @@
     margin-right: 5px;
     font-weight: bold;
   }
+
+  /* ---------- Precision palette via CSS variables ---------- */
+.leaflet-popup-object,
+.object-icon { --accent: #9e9e9e; } /* default/unknown */
+
+.leaflet-popup-object.precision-0,
+.object-icon.precision-0 { --accent: #1e88e5; } /* azzurro */
+.leaflet-popup-object.precision-1,
+.object-icon.precision-1 { --accent: #43a047; } /* verde */
+.leaflet-popup-object.precision-2,
+.object-icon.precision-2 { --accent: #fdd835; } /* giallo */
+.leaflet-popup-object.precision-3,
+.object-icon.precision-3 { --accent: #fb8c00; } /* arancione */
+.leaflet-popup-object.precision-4,
+.object-icon.precision-4 { --accent: #e53935; } /* rosso */
+.leaflet-popup-object.precision-unknown,
+.object-icon.precision-unknown { --accent: #9e9e9e; } /* grigio */
+
+/* Applica il colore al bordo del wrapper e alla tip */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-content-wrapper {
+  border: 2px solid var(--accent);
+}
+
+.leaflet-popup.leaflet-popup-object .leaflet-popup-tip {
+  background: #fff;
+  border: 2px solid var(--accent);
+}
+
+/* (opzionale) alone delicato del colore */
+.leaflet-popup.leaflet-popup-object {
+  filter: drop-shadow(0 0 0.25rem color-mix(in oklab, var(--accent), transparent 70%));
+}
