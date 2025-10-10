@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Pianta del sito</title>
+  <meta charset="UTF-8" />
+  <title>Site Plan / Contexts</title>
+  <link rel="stylesheet" href="../css/popup_object.css" />
+  <link rel="stylesheet" href="../css/popup_sito.css" />
   <link rel="stylesheet" href="../css/record_necropoli.css" />
   <link rel="stylesheet" href="../css/site_graph.css" />
-  <link rel="stylesheet" href="../css/popup_object.css" />
-  <link rel="stylesheet" href="../css/affinity.css" />
+  <link rel="stylesheet" href="../css/samples_graph.css" />
+  <link rel="stylesheet" href="../css/timebar_detail.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/georaster"></script>
@@ -25,39 +27,27 @@
 
     <script type="module">
       import { getPath } from '../../path_utils.js';
-
-      // Set dinamico dei percorsi per logo e link
       document.getElementById('logo-link').href = getPath("index.html");
       document.getElementById('dashboard-logo').src = getPath("images/logo_semplificato.png");
-
       const infoLink = document.getElementById('info-link');
       if (infoLink) infoLink.href = getPath("./info/info.html");
     </script>
 
     <div class="dashboard-section" id="visualization-controls">
-      <h3>Layer's on map</h3>
-      <div class="control-item">
-        <label class="switch">
-          <input type="checkbox" id="toggle-raster" checked>
-          <span class="slider round"></span>
-        </label>
-        <span>Site's map</span>
-      </div>
+      <h3>Layers on map</h3>
       <div class="control-item">
         <label class="switch">
           <input type="checkbox" id="toggle-oggetti" checked>
           <span class="slider round"></span>
         </label>
-        <span>Objects</span>
+        <span>Samples</span>
       </div>
     </div>
 
-    <!-- Reliability range (compatto, come WT1) -->
+    <!-- Reliability range -->
     <div class="precision-compact">
       <div class="precision-header">
-        <span class="precision-title">Data reliability (affidabilità)</span>
-
-        <!-- tooltip (facoltativo) -->
+        <span class="precision-title">Geographic's placment quality</span>
         <button class="dq-help" aria-describedby="dq-tip" aria-label="Come leggere i valori">?</button>
         <div class="dq-tooltip" id="dq-tip" role="tooltip">
           <strong>0</strong> altissima affidabilità<br>
@@ -66,18 +56,14 @@
           <strong>3</strong> bassa affidabilità<br>
           <strong>4</strong> molto bassa / dubbia
         </div>
-
         <span class="precision-range-chip" id="precision-range-label">0–4</span>
       </div>
 
       <div class="precision-range" id="precision-range">
         <div class="range-track"></div>
         <div class="range-fill" id="precision-range-fill"></div>
-
         <span class="thumb-bubble bubble-min" id="prec-bubble-min">0</span>
         <span class="thumb-bubble bubble-max" id="prec-bubble-max">4</span>
-
-        <!-- NB: riutilizziamo gli stessi ID di WT1 per compatibilità JS/CSS -->
         <input type="range" id="precision-min" min="0" max="4" step="1" value="0" aria-label="min affidabilita">
         <input type="range" id="precision-max" min="0" max="4" step="1" value="4" aria-label="max affidabilita">
       </div>
@@ -85,27 +71,38 @@
 
     <div class="dashboard-section" id="site-chart-section" x-data="{ open: false, rendered: false }">
       <h3 @click="open = !open; if (!rendered) { window.renderSiteGraphLazy(); rendered = true; }" style="cursor: pointer;">
-        Tomb's Types
+        Context Types
         <span x-text="open ? '▲' : '▼'" style="float: right; font-size: 14px;"></span>
       </h3>
       <div id="site-chart-container" x-show="open" x-transition>
         <canvas id="siteChartCanvas" width="300" height="300"></canvas>
       </div>
-    </div>    
+    </div>
 
-    <div class="dashboard-section" id="analysis-tools">
-      <h3>Analysis Tool</h3>
-      <div class="control-item">
-        <label class="switch">
-          <input type="checkbox" id="toggle-affinity">
-          <span class="slider round"></span>
-        </label>
-        <span>Affinity Analysis</span>
+    <div class="dashboard-section" id="samples-chart-section" x-data="{ open: false }">
+      <h3 id="samples-chart-header" @click="open = !open">
+        Samples (Top 10)
+        <span style="float:right;font-size:14px;" x-text="open ? '▲' : '▼'"></span>
+      </h3>
+    
+      <div style="display:flex;justify-content:center;gap:10px;align-items:center;padding:6px 12px;">
+        <span class="samp-toggle">
+          Family
+          <label class="switch" style="transform:scale(.9);">
+            <input type="checkbox" id="samples-graph-toggle" />
+            <span class="slider round"></span>
+          </label>
+          Species
+        </span>
       </div>
-      <div id="affinity-results" class="hidden">
-        <!-- Risultati dell'analisi verranno mostrati qui -->
+    
+      <div id="samples-chart-container" x-show="open" x-transition>
+        <canvas id="samplesChartCanvas" width="280" height="280"></canvas>
       </div>
-    </div>   
+    
+      <!-- piccola legenda con icone (solo top-10) -->
+      <div id="samples-mini-legend" x-show="open" x-transition></div>
+    </div>
 
     <div class="dashboard-section" id="info-section">
       <a href="#" class="info-link" id="info-link">ℹ️ Info Page</a>
@@ -116,17 +113,34 @@
 
   <!-- Script principali -->
   <script type="module" src="map_viewer.js"></script>
-  <script type="module">
-    import { renderSiteGraph } from './site_graph.js';
-    import { Tutorial } from './tutorial_necropoli.js';
+  <script type="module" src="timebar_detail.js"></script>
+<script type="module">
+  import { Tutorial } from './tutorial_necropoli.js';
 
-    window.renderSiteGraphLazy = renderSiteGraph;
+  // attende un evento o “capisce” che la condizione è già vera
+  const wait = (name, check, timeout = 10000) => new Promise((resolve) => {
+    if (check?.()) return resolve();
+    const t = setTimeout(resolve, timeout);
+    document.addEventListener(name, () => { clearTimeout(t); resolve(); }, { once: true });
+  });
 
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
+  const isDetailReady  = () => typeof window.__detail_computePhaseCounts === 'function';
+  const isTimebarReady = () => !!document.getElementById('timebar-detail')?.dataset.ready;
+
+  // avvia il tutorial quando entrambe le cose sono pronte
+  Promise.all([
+    wait('detail:ready',  isDetailReady),
+    wait('timebar:ready', isTimebarReady)
+  ]).then(() => {
+    // doppio rAF: assicura layout “stabile”
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         new Tutorial();
-      }, 500);
+        // nudge: forza un recalcolo del posizionamento della barra sotto l’overlay
+        window.dispatchEvent(new Event('resize'));
+      });
     });
-  </script>
+  });
+</script>
 </body>
 </html>

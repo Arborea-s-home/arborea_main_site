@@ -1,0 +1,308 @@
+/* ===========================
+   Timeline (modulare, soft)
+   =========================== */
+
+/* Tema base (molto trasparente) */
+#timeline-container {
+  --accent: #2563eb;
+  --accent-weak: rgba(37,99,235,.12);
+  --bg: rgba(255,255,255,.18);          /* ✅ quasi trasparente */
+  --stroke: rgba(255,255,255,.25);
+  --shadow: 0 6px 14px rgba(0,0,0,.06);
+  --text: #0f172a;
+  --muted: #6b7280;
+  --tick-bg: rgba(2,6,23,.03);
+  --track: rgba(2,6,23,.12);
+  --track-hover: rgba(2,6,23,.24);
+  --thumb-bg: #fff;
+  --thumb-border: rgba(2,6,23,.22);
+
+  position: fixed;
+  padding: 10px 12px;                   /* ✅ più compatto */
+  border-radius: 12px;
+  background: var(--bg);
+  backdrop-filter: blur(4px);           /* blur leggero */
+  box-shadow: var(--shadow);
+  border: 1px solid var(--stroke);
+  z-index: 450;
+  display: grid;
+  grid-template-rows: auto 72px auto auto; /* ✅ altezza barre ridotta */
+  gap: 8px;
+  pointer-events: none;
+  font-family: "Lato", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Interattività interna */
+#timeline-container .timeline-controls,
+#timeline-container .timeline-bars,
+#timeline-container .timeline-axis,
+#timeline-container .timeline-sliders,
+#timeline-container .timeline-tick,
+#timeline-container input[type="range"] {
+  pointer-events: auto;
+}
+
+/* ===========================
+   Controlli (switch)
+   =========================== */
+#timeline-container .timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+#timeline-container .tl-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text);
+  user-select: none;
+}
+
+/* interruttore iOS-like */
+#timeline-container .tl-switch input {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e6e9ef;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease;
+  box-shadow: inset 0 0 0 1px rgba(2,6,23,.06);
+}
+#timeline-container .tl-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--thumb-bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,.16);
+  transition: transform .15s ease;
+}
+#timeline-container .tl-switch input:checked {
+  background: var(--accent);
+}
+#timeline-container .tl-switch input:checked::after {
+  transform: translateX(16px);
+}
+#timeline-container .tl-switch input:focus-visible {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent),
+    inset 0 0 0 1px rgba(255,255,255,.6);
+}
+#timeline-container .tl-label { color: var(--text); }
+
+/* ===========================
+   Barre (istogramma)
+   =========================== */
+#timeline-container .timeline-bars {
+  display: grid;
+  grid-template-columns: repeat(var(--range-count, 14), 1fr);
+  align-items: end;
+  gap: 5px;
+  height: 100%;
+  min-height: 56px;                    /* ✅ più basso */
+  padding: 4px 2px 0 2px;
+}
+
+/* Base delle barre (verrà colorata per fase via nth-child) */
+#timeline-container .timeline-bar {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  transition: transform .12s ease, opacity .15s ease, box-shadow .15s ease, filter .15s ease;
+  transform-origin: bottom center;
+  opacity: .95;
+  filter: saturate(1);
+}
+#timeline-container .timeline-bar:hover {
+  transform: translateY(-1px) scaleY(1.04);
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+  opacity: 1;
+}
+
+/* Evidenziazione barra nel range */
+#timeline-container .timeline-bar.in-range {
+  filter: saturate(1.15) brightness(1.02);
+}
+
+/* 🌈 Gradiente multi-colore per fase (14 fasi) */
+#timeline-container .timeline-bars .timeline-bar:nth-child(1)  { background: linear-gradient(to top, hsl(270 70% 55%), hsl(270 70% 75%)); } /* Mesolitico: viola */
+#timeline-container .timeline-bars .timeline-bar:nth-child(2)  { background: linear-gradient(to top, hsl(250 70% 50%), hsl(250 70% 74%)); } /* Eneolitico: indaco */
+#timeline-container .timeline-bars .timeline-bar:nth-child(3)  { background: linear-gradient(to top, hsl(220 75% 50%), hsl(220 75% 74%)); } /* Neolitico: blu */
+#timeline-container .timeline-bars .timeline-bar:nth-child(4)  { background: linear-gradient(to top, hsl(200 75% 48%), hsl(200 75% 72%)); } /* Bronzo: azzurro */
+#timeline-container .timeline-bars .timeline-bar:nth-child(5)  { background: linear-gradient(to top, hsl(185 70% 45%), hsl(185 70% 70%)); } /* Ferro/Vill.: teal */
+#timeline-container .timeline-bars .timeline-bar:nth-child(6)  { background: linear-gradient(to top, hsl(165 65% 42%), hsl(165 65% 68%)); } /* Etr./Orient.: verde mare */
+#timeline-container .timeline-bars .timeline-bar:nth-child(7)  { background: linear-gradient(to top, hsl(145 60% 42%), hsl(145 60% 66%)); } /* Arcaico (Roma): verde */
+#timeline-container .timeline-bars .timeline-bar:nth-child(8)  { background: linear-gradient(to top, hsl(120 60% 44%), hsl(120 60% 68%)); } /* Repubblicano: verde lime */
+#timeline-container .timeline-bars .timeline-bar:nth-child(9)  { background: linear-gradient(to top, hsl(95 65% 48%),  hsl(95 65% 72%));  } /* Imperiale: giallo-verde */
+#timeline-container .timeline-bars .timeline-bar:nth-child(10) { background: linear-gradient(to top, hsl(60 80% 54%),  hsl(60 80% 78%));  } /* Tarda Antichità: giallo */
+#timeline-container .timeline-bars .timeline-bar:nth-child(11) { background: linear-gradient(to top, hsl(40 85% 55%),  hsl(40 85% 78%));  } /* Medioevo: arancio */
+#timeline-container .timeline-bars .timeline-bar:nth-child(12) { background: linear-gradient(to top, hsl(20 85% 56%),  hsl(20 85% 78%));  } /* Rinascimento: arancio-rosso */
+#timeline-container .timeline-bars .timeline-bar:nth-child(13) { background: linear-gradient(to top, hsl(8 85% 58%),   hsl(8 85% 80%));   } /* Periodo Moderno: rosso corallo */
+#timeline-container .timeline-bars .timeline-bar:nth-child(14) { background: linear-gradient(to top, hsl(0 80% 56%),   hsl(0 80% 78%));   } /* Età contemporanea: rosso */
+
+/* ===========================
+   Asse fasi (etichette)
+   =========================== */
+#timeline-container .timeline-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--range-count, 14), 1fr);
+  gap: 5px;
+}
+#timeline-container .timeline-tick {
+  background: var(--tick-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 10.5px;                  /* leggermente più piccolo */
+  line-height: 1.2;
+  text-align: center;
+  color: var(--text);
+  padding: 5px 4px;
+  transition: background .12s, border-color .12s, color .12s, transform .08s;
+}
+#timeline-container .timeline-tick:hover {
+  border-color: var(--track-hover);
+  transform: translateY(-1px);
+}
+#timeline-container .timeline-tick.in-range {
+  background: color-mix(in srgb, var(--accent) 14%, white);
+  border-color: color-mix(in srgb, var(--accent) 26%, white);
+  color: #0b1220;
+}
+
+/* ===========================
+   Slider doppio (timebar)
+   =========================== */
+#timeline-container .timeline-sliders {
+  position: relative;
+  height: 40px;                       /* ✅ più basso */
+  display: grid;
+  align-items: center;
+}
+
+/* Base track (pill) */
+#timeline-container .timeline-sliders::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%; transform: translateY(-50%);
+  height: 8px;
+  background: var(--track);
+  border-radius: 999px;
+}
+
+/* Fill del range selezionato */
+#timeline-container .timeline-sliders::before {
+  content: "";
+  position: absolute;
+  left: calc((var(--range-from) / (var(--range-count) - 1)) * 100%);
+  right: calc((1 - (var(--range-to) / (var(--range-count) - 1))) * 100%);
+  top: 50%; transform: translateY(-50%);
+  height: 8px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent) 86%, white),
+    var(--accent));
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+  transition: left .12s ease, right .12s ease;
+}
+
+/* Range inputs sovrapposti */
+#timeline-container .timeline-sliders input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; background: transparent;
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  pointer-events: none; /* thumbs sì, track no */
+  margin: 0;
+}
+
+/* WebKit thumb */
+#timeline-container .timeline-sliders input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  height: 16px; width: 16px;           /* ✅ più discreti */
+  background: var(--thumb-bg);
+  border-radius: 50%;
+  border: 1px solid var(--thumb-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.14);
+  pointer-events: auto; cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+#timeline-container .timeline-sliders input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 10px rgba(0,0,0,.16);
+  border-color: var(--track-hover);
+}
+#timeline-container .timeline-sliders input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,.2);
+  border-color: var(--accent);
+}
+
+/* Firefox thumbs */
+#timeline-container .timeline-sliders input[type="range"]::-moz-range-thumb {
+  height: 16px; width: 16px;
+  background: var(--thumb-bg);
+  border-radius: 50%;
+  border: 1px solid var(--thumb-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.14);
+  pointer-events: auto; cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+#timeline-container .timeline-sliders input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 10px rgba(0,0,0,.16);
+  border-color: var(--track-hover);
+}
+#timeline-container .timeline-sliders input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,.2);
+  border-color: var(--accent);
+}
+#timeline-container .timeline-sliders input[type="range"]::-moz-range-track {
+  background: transparent;
+}
+
+/* Focus ring accessibile */
+#timeline-container:focus-within .timeline-sliders::before {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Etichette */
+#timeline-container .timeline-sliders .labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text);
+  margin-top: 6px;
+}
+
+/* Ombreggiatura del range sopra le barre (più bassa) */
+#timeline-container::after {
+  content: "";
+  position: absolute;
+  left: calc((var(--range-from) / (var(--range-count) - 1)) * 100%);
+  right: calc((1 - (var(--range-to) / (var(--range-count) - 1))) * 100%);
+  bottom: 50px;                        /* ✅ più basso */
+  height: 60px;                        /* ✅ più basso */
+  background: var(--accent-weak);
+  border-radius: 10px;
+  pointer-events: none;
+  transition: left .12s ease, right .12s ease;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 900px) {
+  #timeline-container { padding: 8px 10px; }
+  #timeline-container .timeline-bars { gap: 4px; }
+  #timeline-container .timeline-axis { gap: 4px; }
+}

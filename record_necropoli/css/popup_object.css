@@ -1,187 +1,154 @@
-/* Object Popup Styling */
-.leaflet-popup-content-wrapper-object {
-    border-radius: 8px;
-    padding: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e0e0e0;
-    background: #fff;
-    min-width: 300px;
-    max-width: 500px;
-  }
-  
-  .leaflet-popup-content-object {
-    margin: 0;
-    width: auto !important;
-  }
-  
-  .popup-wrapper {
-    display: flex;
-    flex-direction: column;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
-  }
-  
-  .popup-image-info {
-    display: flex;
-    transition: all 0.3s ease;
-    position: relative;
-    min-height: 300px;
-  }
-  
-  .popup-image-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 25px;
-    background-color: #f8f8f8;
-    border-radius: 8px 8px 0 0;
-    position: relative;
-  }
-  
-  .popup-image {
-    max-height: 350px;
-    max-width: 100%;
-    object-fit: contain;
-    transition: all 0.3s ease;
-    margin-bottom: 15px;
-  }
-  
-  .popup-image-description {
-    width: 100%;
-    padding: 12px;
-    background-color: rgba(255,255,255,0.9);
-    border-radius: 4px;
-    margin-top: 10px;
-  }
-  
-  .popup-info-container {
-    flex: 1;
-    padding: 20px;
-    width: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    background: #fff;
-    border-left: 1px solid #eee;
-    min-height: 300px;
-  }
-  
-  .popup-info-container.collapsed {
-    display: none;
-  }
-  
-  .popup-wrapper.show-info .popup-image-container {
-    width: 50%;
-    padding: 20px;
-  }
-  
-  .popup-wrapper.show-info .popup-image {
-    max-height: 250px;
-    margin-bottom: 10px;
-  }
-  
-  .popup-wrapper.show-info .popup-info-container {
-    width: 50%;
-    opacity: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  
-  .popup-sigla {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  .popup-controls {
-    padding: 12px 20px;
-    background: #f5f5f5;
-    border-top: 1px solid #eee;
-  }
-  
-  .popup-toggle-btn {
-    background-color: #4a6fa5;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-  }
-  
-  .popup-toggle-btn:hover {
-    background-color: #3a5a80;
-  }
-  
-  .popup-link {
-    padding: 10px 20px;
-    border-top: 1px solid #eee;
-    font-size: 14px;
-  }
-  
-  .popup-link a {
-    color: #4a6fa5;
-    text-decoration: none;
-  }
-  
-  .popup-link a:hover {
-    text-decoration: underline;
-  }
-  
-  .popup-info-item {
-    margin-bottom: 16px;
-  }
-  
-  .popup-info-label {
-    font-weight: 700;
-    color: #4a6fa5;
-    margin-bottom: 5px;
-    font-size: 0.85em;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  
-  .popup-info-main-value {
-    font-weight: 600;
-    color: #222;
-    font-size: 1.05em;
-    padding-left: 8px;
-  }
-  
-  .popup-info-value {
-    color: #444;
-    padding-left: 8px;
-    line-height: 1.5;
-    font-size: 0.95em;
-  }
-  
-  .popup-info-function {
-    color: #666;
-    font-size: 0.95em;
-    padding-left: 8px;
-    font-style: italic;
-    margin-top: 4px;
-  }
-  
-  .popup-link-icon {
-    display: inline-block;
-    margin-right: 5px;
-    font-weight: bold;
-  }
+/* ===== Object Popup – nuovo layout (Leaflet) ============================== */
+/* Sblocca i limiti di Leaflet e dimensiona il vero wrapper */
+.leaflet-popup.leaflet-popup-object { 
+  max-width: none !important;                 /* niente tetto globale */
+  filter: drop-shadow(0 0 0.25rem color-mix(in oklab, var(--accent), transparent 70%));
+}
 
-  /* ---------- Precision palette via CSS variables ---------- */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+  border: 1px solid #e6e6e6;
+  background: #fff;
+
+  /* dimensionamento fluido del wrapper */
+  min-width: 360px;
+  max-width: 800px;
+  width: clamp(360px, 70vw, 800px);
+}
+
+/* Allarga il contenuto fino a riempire il wrapper (Leaflet mette width/maxWidth) */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-content {
+  width: 100% !important;       /* occupa tutto il wrapper */
+  max-width: none !important;   /* ignora il maxWidth di default (300px) */
+  margin: 0 !important;         /* gestiamo noi i padding/margini */
+  padding: 0 !important;
+  display: block;
+}
+
+/* Punta del popup con il colore di accento */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-tip {
+  background: #fff;
+  border: 2px solid var(--accent);
+}
+
+/* --- Wrapper contenuti --------------------------------------------------- */
+
+.popup-wrapper.object {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #222;
+}
+
+/* --- Header -------------------------------------------------------------- */
+
+.obj-header {
+  display: grid;
+  grid-template-columns: minmax(44px, 56px) 1fr; /* icona + titolo */
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.obj-header-icon {
+  width: clamp(44px, 6vw, 64px);
+  height: clamp(44px, 6vw, 64px);
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.08);
+  object-fit: cover;
+  display: block;
+}
+
+.obj-header-precise {
+  font-size: clamp(16px, 2.1vw, 20px);
+  font-weight: 700;
+  color: #111;
+}
+.obj-header-family {
+  font-size: clamp(14px, 1.8vw, 16px);
+  font-style: italic;
+  color: #444;
+  margin-top: 2px;
+}
+
+/* --- Body: due colonne + divisore --------------------------------------- */
+
+.obj-body {
+  display: grid;
+  grid-template-columns: 1.4fr 1px 1fr; /* sinistra un po’ più larga */
+  gap: 0;
+  padding: 12px 14px 14px;
+}
+
+.obj-col { padding: 6px 6px; }
+
+.obj-divider {
+  background: #eee;
+  width: 1px;
+  height: 100%;
+}
+
+/* --- Info items ---------------------------------------------------------- */
+
+.popup-info-item { margin-bottom: 12px; }
+
+.popup-info-label {
+  font-weight: 700;
+  color: #4a6fa5;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.popup-info-value {
+  color: #333;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Bibliografia: scroll solo nella colonna destra */
+.obj-col-right .popup-info-item .popup-info-value {
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+/* --- Links (colonna destra) --------------------------------------------- */
+
+.obj-links {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.obj-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4a6fa5;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.obj-link:hover { text-decoration: underline; }
+
+.popup-link-icon {
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* --- Palette precisione tramite CSS variables ---------------------------- */
+
 .leaflet-popup-object,
 .object-icon { --accent: #9e9e9e; } /* default/unknown */
 
@@ -198,17 +165,63 @@
 .leaflet-popup-object.precision-unknown,
 .object-icon.precision-unknown { --accent: #9e9e9e; } /* grigio */
 
-/* Applica il colore al bordo del wrapper e alla tip */
-.leaflet-popup.leaflet-popup-object .leaflet-popup-content-wrapper {
-  border: 2px solid var(--accent);
+/* --- Responsive ---------------------------------------------------------- */
+
+@media (min-width: 740px) {
+  .popup-info-item { margin-bottom: 14px; }
+}
+@media (min-width: 640px) {
+  .obj-body { grid-template-columns: 1.6fr 1px 1fr; }
+}
+@media (min-width: 760px) {
+  .popup-info-label { font-size: 0.85rem; letter-spacing: 0.45px; }
+  .popup-info-item { margin-bottom: 16px; }
+}
+@media (max-width: 520px) {
+  .obj-header {
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+  }
+  .obj-header-icon { width: 44px; height: 44px; }
+  .obj-header-precise { font-size: 15px; }
+  .obj-header-family  { font-size: 13px; }
+  .obj-body { grid-template-columns: 1fr; }
+  .obj-divider { display: none; }
+  .obj-col { padding: 8px 2px; }
 }
 
+/* === FIX popup oggetti: rimuovi colli di bottiglia e allarga contenuto === */
+
+/* 1) Sblocca il tetto globale solo per i popup degli oggetti */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-content-wrapper {
+  max-width: 800px !important;            /* > del 400px globale */
+  min-width: 360px;
+  width: clamp(360px, 70vw, 800px);
+  border-radius: 10px;
+  padding: 0;
+}
+
+/* 2) Il contenuto deve riempire tutto il wrapper */
+.leaflet-popup.leaflet-popup-object .leaflet-popup-content {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 3) Togli il cappio a 300px del contenitore interno personalizzato */
+.leaflet-popup.leaflet-popup-object .popup-wrapper.object {
+  max-width: none !important;   /* era 300px */
+  width: 100%;
+}
+
+/* (opzionale) punta e alone */
 .leaflet-popup.leaflet-popup-object .leaflet-popup-tip {
   background: #fff;
   border: 2px solid var(--accent);
 }
 
-/* (opzionale) alone delicato del colore */
-.leaflet-popup.leaflet-popup-object {
-  filter: drop-shadow(0 0 0.25rem color-mix(in oklab, var(--accent), transparent 70%));
+.province-map .province-poly {
+  /* leggerissimo blur per rendere il bordo più “morbido” */
+  filter: blur(1.0px);
 }

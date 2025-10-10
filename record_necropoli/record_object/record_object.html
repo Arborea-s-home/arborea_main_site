@@ -1,69 +1,161 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oggetto del Corredo</title>
-  <link rel="stylesheet" href="./record_object.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Record campione</title>
+
+  <link rel="stylesheet" href="./record_object.css" />
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 </head>
 <body>
+<!-- GRID 5/8 - 3/8 -->
+<div class="record-container">
+  <!-- ============ MACRO-BOX SINISTRA ============ -->
+  <div class="macro-box macro-left">
+    <!-- SAMPLE (verde) -->
+    <div class="subbox sample-box" id="sample-info">
+      <h1 id="taxon-title">Loading...</h1>
+      <h2 id="sample-subtitle"></h2>
+      <div id="sample-fields"></div>
+    </div>
 
-  <div class="record-container">
-    <div class="info-box" id="object-info">
-      <h1 id="sigla">Loading...</h1>
-      <h2 id="original_description"></h2>
-      <div id="fields"></div>
-      
-      <!-- Sezione: Oggetti nella stessa tomba -->
-      <details class="collapsible">
-        <summary>Objects from the same tomb</summary>
-        <div class="collapsible-content">
-          <div id="same-tomb" class="object-list"></div>
+    <!-- TAXON DETAIL (verde pantano 50%) -->
+    <div class="subbox taxon-box" id="taxon-detail-box">
+      <h3 class="taxon-title">taxon detail</h3>
+
+      <!-- layout 2 colonne -->
+      <div class="taxon-grid">
+        <!-- Colonna SINISTRA: testi -->
+        <div class="taxon-meta">
+          <!-- Nomi & usi -->
+          <div class="field"><span class="label">Nomi comuni:</span> <span id="td-nomi"></span></div>
+          <div class="field"><span class="label">Usi attestati:</span> <span id="td-usi"></span></div>
+
+          <!-- Data sources (loghi) -->
+          <div class="taxon-sources">
+            <div class="label-inline">Data Sources:</div>
+            <div class="source-logos">
+              <a id="src-acta" class="src-logo" href="https://www.actaplantarum.org/" target="_blank" rel="noopener" title="ActaPlantarum">
+                <img id="logo-acta" alt="ActaPlantarum" />
+              </a>
+              <a id="src-floritaly" class="src-logo" href="https://dryades.units.it/floritaly/" target="_blank" rel="noopener" title="Floritaly">
+                <img id="logo-floritaly" alt="Floritaly" />
+              </a>
+            </div>
+          </div>
+
+          <!-- Image source -->
+          <div class="field image-source">
+            <span class="label">Image source:</span>
+            <a id="td-image-source-link" href="#" target="_blank" rel="noopener">ActaPlantarum</a>
+          </div>
         </div>
-      </details>
 
-      <!-- Sezione: Oggetti affini -->
-      <details class="collapsible" id="similar-objects-section" open>
-        <summary>Automatically Generated Related objects</summary>
-<div class="collapsible-content">
-  <div class="affinity-controls">
-    <div class="affinity-range">
-      <span>Show affinity between</span>
-      <input type="number" id="min-affinity" min="0" max="100" value="0" placeholder="Min %">
-      <span>-</span>
-      <input type="number" id="max-affinity" min="0" max="100" value="100" placeholder="Max %">
+        <!-- Colonna DESTRA: immagine + box link -->
+        <div class="taxon-media">
+          <img id="td-image" alt="Anteprima immagine taxon" />
+          <div class="taxon-links-panel">
+            <div class="taxon-links-row">
+              <a id="td-open-acta"        class="link-btn" target="_blank" rel="noopener">View on ActaPlantarum</a>
+              <a id="td-open-floritaly"   class="link-btn" target="_blank" rel="noopener">View on Floritaly</a>
+              <a id="td-open-wikipedia"   class="link-btn" target="_blank" rel="noopener">View on Wikipedia</a>
+              <a id="td-open-wikispecies" class="link-btn" target="_blank" rel="noopener">View on Wikispecies</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <button id="toggle-affinity-settings" class="settings-toggle">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"></circle>
-        <path d="..."></path>
-      </svg>
-      Customize
-    </button>
   </div>
 
-  <div id="similar-objects" class="object-list"></div>
-  <button id="show-more-btn" class="show-more-btn">Show more objects</button>
+  <!-- ============ MACRO-BOX DESTRA ============ -->
+  <div class="macro-box macro-right">
+    <!-- MAPPA (bianco, bordo nero tenue) -->
+    <div class="subbox map-box">
+      <div id="mini-map" class="mini-map" aria-label="Anteprima geometrie di sito e contesto"></div>
+    </div>
+
+    <!-- SITE (azzurro) -->
+    <div class="subbox site-box" id="site-card">
+      <h3 class="subbox-title">Site</h3>
+      <div id="site-fields"></div>
+      <div id="site-links" class="link-buttons"></div>
+    </div>
+
+    <!-- CONTEXT (rosso chiaro) -->
+    <div class="subbox context-box" id="context-card">
+      <h3 class="subbox-title">Context</h3>
+      <div id="context-fields"></div>
+    </div>
+  </div>
 </div>
-      </details>
-    </div>
 
-    <div class="image-box">
-      <div id="object-images">
-        <!-- Immagini inserite via JS -->
+<!-- ============ RELATED (8/8, full width) ============ -->
+<div class="related-wrapper">
+  <div class="info-box related-box">
+    <details class="collapsible" id="similar-objects-section" open>
+      <summary>Related samples</summary>
+      <div class="collapsible-content">
+
+        <!-- Layout a 2 colonne: contenuti + sidebar collassabile -->
+        <div class="related-grid">
+          <!-- Colonna principale -->
+          <div class="related-main">
+            <div class="affinity-controls">
+              <div class="affinity-range">
+                <span>Show affinity between</span>
+                <input type="number" id="min-affinity" min="0" max="100" value="0" placeholder="Min %">
+                <span>-</span>
+                <input type="number" id="max-affinity" min="0" max="100" value="100" placeholder="Max %">
+              </div>
+              <div class="view-toggle">
+                <button id="view-list" class="toggle-btn active">List</button>
+                <button id="view-provinces" class="toggle-btn">Province map</button>
+              </div>
+              <button id="toggle-affinity-settings" class="settings-toggle" title="Show/Hide weight panel">
+                ⚙️ Customize
+              </button>
+            </div>
+
+            <!-- LIST -->
+            <div id="similar-objects" class="object-list"></div>
+            <button id="show-more-btn" class="show-more-btn" style="display:none;">Show more</button>
+
+            <!-- MAPPA PROVINCE -->
+            <div id="province-map" class="mini-map province-map" style="display:none;"></div>
+            <div id="province-legend" class="province-legend" style="display:none;"></div>
+          </div>
+
+          <!-- Sidebar collassabile (stesso id usato dal JS) -->
+          <aside id="affinity-settings-panel" class="affinity-sidebar" style="display:none;">
+            <div class="affinity-sidebar-inner">
+              <h4 class="sidebar-title">Customize samples</h4>
+              <div id="affinity-sliders"></div>
+
+              <div class="affinity-actions">
+                <button id="apply-affinity-settings" class="apply-btn">Apply</button>
+                <button id="reset-affinity-settings" class="apply-btn outline">Reset</button>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
-      
-      <div class="sidebar-controls">
-        <div id="affinity-settings-panel" class="affinity-settings-panel" style="display: none;">
-          <h4>Adjust the weights</h4>
-          <div id="affinity-sliders"></div>
-          <button id="apply-affinity-settings" class="apply-btn">Apply</button>
-        </div>        
-      </div>
-    </div>
+    </details>
   </div>
-  
+</div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module" src="./tutorial_record_object.js"></script>
   <script type="module" src="./record_object.js"></script>

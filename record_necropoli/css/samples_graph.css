@@ -1,0 +1,120 @@
+/* Contenitore sezione */
+#samples-chart-section {
+  margin-top: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Header collassabile */
+#samples-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Toolbar s_type (locale al widget) */
+.samp-stype-toolbar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 6px 10px 2px;
+}
+.samp-stype-toolbar .stype-btn {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+.samp-stype-toolbar .stype-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.samp-stype-toolbar .stype-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.samp-stype-toolbar .stype-btn.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,.12) inset;
+}
+
+/* Toggle Family / Species */
+.samp-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #374151;
+}
+.samp-toggle input[type="checkbox"] {
+  width: 34px;
+  height: 18px;
+}
+
+/* Container grafico (altezza dinamica impostata da JS) */
+#samples-chart-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 10px auto;
+}
+#samples-chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mini-legend (solo top-10 con icone) */
+#samples-mini-legend {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 8px 12px 14px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.samp-leg-item {
+  display: flex;
+  align-items: flex-start;  /* permette label multi-line */
+  gap: 8px;
+  min-width: 0;
+}
+
+.samp-leg-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.samp-leg-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.samp-leg-label {
+  font-size: 11.5px;           /* un filo più piccolo */
+  color: #374151;
+  line-height: 1.15;
+  /* permetti andare a capo sui <br> senza ellissi */
+  white-space: normal;
+  overflow: visible;
+}

@@ -1,7 +1,6 @@
 ﻿Num.,ID,DENOMINAZIONE,ambito,DEFINIZIONE
-1,Cem,Cementery,funerary,
-2,Ch_t,Chamber tomb,funerary,
-4,Ci_T,Cist Tomb,funerary,
-5,Gr,Grave,funerary,
-6,Th,Tholos,funerary,
-7,To,Tomb,funerary,
+1,Fun,funerary,context type
+2,Sac,sacred,context type,
+4,Sett,settlement,context type,
+5,Un-W,underwater,context type,
+6,?,undet,context type,

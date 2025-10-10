@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyMiTo</title>
+  <title>Arborea</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 
-  <!-- Stile personalizzato -->
+  <!-- Stili -->
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="timeline.css" />
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  
+
   <!-- PapaParse per leggere CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
@@ -21,11 +22,11 @@
   <div id="sidebar">
     <div id="tutorial-group">
       <label class="switch">
-        <input type="checkbox" id="group-by-municipality">
+        <input type="checkbox" id="admin-boundary-switch">
         <span class="slider round"></span>
       </label>
-      <span>Group by ancient region</span>
-        <div style="margin-bottom: 1.5rem;"></div>   
+      <span id="admin-boundary-label">Aggrega per regioni</span>
+      <div style="margin-bottom: 1.5rem;"></div>
       <h2>Select archaeological feature</h2>
       <div id="ambito-buttons" class="dashboard"></div>
     </div>
@@ -33,7 +34,7 @@
     <div id="mapped-sites-list">
       <div id="mapped-sites-container"></div>
       <ul id="mapped-sites-ul"></ul>
-    </div>    
+    </div>
 
     <div id="legend">
       <h3>Legend</h3>
@@ -46,7 +47,6 @@
   </div>
 
   <!-- Logo -->
-
   <div class="map-logo-container" id="map-logo-wrapper">
     <a id="map-logo-link">
       <img id="map-logo-img" alt="Mycenean and Minoan Tombs" class="map-logo" />
@@ -57,18 +57,45 @@
         <polyline points="18 15 12 9 6 15" />
       </svg>
     </button>
-  </div>  
+  </div>
   <button id="map-logo-restore" title="Mostra logo">🔖</button>
-  
-  <!-- mappa -->
-  <div id="map"></div>
 
-  <!-- Leaflet JS -->
+  <!-- Wrapper mappa + timeline -->
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+  <!-- Timeline overlay -->
+  <div id="timeline-container">
+    <div class="timeline-controls">
+      <div class="labels">
+        <span class="chip"><span class="dot"></span><span id="timeline-label-from"></span></span>
+        <span class="chip"><span class="dot"></span><span id="timeline-label-to"></span></span>
+      </div>
+      <label class="tl-switch">
+        <input id="timeline-undated" type="checkbox" />
+        <span class="tl-label">add undated sites</span>
+      </label>
+    </div>
+
+    <div class="timeline-bars"></div>
+    <div class="timeline-axis"></div>
+
+    <div class="timeline-sliders">
+      <input id="timeline-from" type="range" value="0" />
+      <input id="timeline-to"   type="range" value="0" />
+    </div>
+  </div>
+
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+  <!-- Moduli -->
   <script type="module" src="charts.js"></script>
   <script type="module" src="dashboard.js"></script>
+  <script type="module" src="homepage_sites_graph.js"></script>
+
   <!-- Script per gestire percorsi dinamici -->
   <script type="module">
     import { getPath } from './path_utils.js';
@@ -76,6 +103,9 @@
     document.getElementById("map-logo-link").href = getPath("./info/info.html");
   </script>
 
-  <!-- Mappa -->
-  <script type="module" src="map.js"></script> 
+  <!-- Mappa, Timeline, Tutorial -->
+  <script type="module" src="map.js"></script>
+  <script type="module" src="timeline.js"></script>
   <script type="module" src="tutorial.js"></script>
+</body>
+</html>

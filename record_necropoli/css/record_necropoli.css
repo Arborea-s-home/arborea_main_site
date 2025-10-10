@@ -167,7 +167,7 @@
   flex-direction: column;
   gap: 20px;
   backdrop-filter: blur(5px);
-  border-left: 2px solid rgba(67, 97, 238, 0.5);
+  border-left: 2px solid rgba(197, 94, 34, 0.5);
   box-shadow: -3px 0 10px rgba(67, 97, 238, 0.1);
 }
 
@@ -175,7 +175,7 @@
   background: rgba(255, 255, 255, 0.8);
   border-radius: 10px;
   padding: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(197, 94, 34, 0.5);
   border: 1px solid rgba(0,0,0,0.05);
 }
 
@@ -476,90 +476,312 @@ input:checked + .slider:before {
   }
 }
 
-/* Filtri oggetti - Versione migliorata */
-#category-filter {
-  position: fixed !important;
-  top: 100px !important;
-  left: 50px !important;
-  bottom: 100px !important;
-  width: 80px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  background: rgba(255,255,255,0.50) !important;
-  backdrop-filter: blur(6px) !important;
-  border: 1px solid rgba(90, 97, 138, 0.1) !important;
-  border-radius: 8px !important;
-  padding: 10px 8px !important;
-  z-index: 1001 !important;
-  overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-}
-.category-btn {
-  width: 60px !important;
-  height: 60px !important;
-  border-radius: 50% !important;
-  border: 3px solid rgba(17, 49, 235, 0.5) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-  margin: 0 !important;
+/* ===================================================================
+   Filters (taxa) – 3 colonne, hover popover, modal centrale (NUOVO)
+   =================================================================== */
+
+   #category-filter.cf{
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    max-height: calc(100vh - 120px);
+    width: 360px;
+    z-index: 1001;
+  
+    background: rgba(255,255,255,0.50);
+    backdrop-filter: blur(6px);
+    border: 2px solid #22c55e;             /* bordo verde del box */
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+  
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Header */
+  #category-filter .cf-header{
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px 8px 12px;
+    border-bottom: 1px solid rgba(34,197,94,0.25);
+  }
+  #category-filter .cf-search{
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+  }
+  #category-filter .cf-search:focus{
+    border-color: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+  }
+  #category-filter .cf-all,
+  #category-filter .cf-collapse,
+  #category-filter .cf-reset{
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 10px;
+    border: 1px solid #22c55e;
+    background: #f0fff4;
+    color: #065f46;
+    cursor: pointer;
+  }
+  #category-filter .cf-reset{
+    border-color: #e11d48;
+    background: #fff1f2;
+    color: #9f1239;
+  }
+  
+  /* Grid (3 colonne) */
+  #category-filter .cf-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 12px;
+    overflow: auto;
+  }
+  
+  /* COLLAPSE VERTICALE: 1 colonna, max 5 elementi */
+  #category-filter.cf-collapsed .cf-grid{
+    grid-template-columns: 1fr;
+  }
+  #category-filter.cf-collapsed .cf-col:not(:first-child){
+    display: none;
+  }
+  #category-filter.cf-collapsed .cf-col:first-child .cf-family:nth-child(n+6){
+    display: none; /* mostra solo i primi 5 */
+  }
+  
+  /* Colonna */
+  #category-filter .cf-col{ display:flex; flex-direction:column; gap:12px; }
+  
+  /* Family card (solo icona + label) */
+  #category-filter .cf-family{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  #category-filter .cf-family-label{
+    font-size: 12px; color:#111827; text-align:center;
+  }
+  
+  /* Bottoni tondi con IMG che riempie tutto il cerchio */
+  #category-filter .cf-family-btn,
+  #category-filter .cf-sub-btn{
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(34,197,94,0.45);
+    background: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    padding: 0; overflow: hidden; /* importante per cerchio pieno */
+  }
+  #category-filter .cf-sub-btn{ width: 44px; height: 44px; }
+  
+  #category-filter .cf-family-btn img,
+  #category-filter .cf-sub-btn img{
+    width: 100%; height: 100%;
+    object-fit: cover; /* riempie il cerchio */
+    display: block;
+  }
+  
+  /* Stato attivo: BLU (non confonde col verde del box) */
+  #category-filter .cf-family-btn.active,
+  #category-filter .cf-sub-btn.active{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.18) inset;
+  }
+  #category-filter .cf-family-btn:hover,
+  #category-filter .cf-sub-btn:hover{
+    transform: scale(1.05);
+  }
+  
+  /* Popover (hover) – a lato */
+  .cf-popover{
+    position: fixed;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  
+    /* Trasparenza 50% */
+    background: rgba(255,255,255,0.50);
+  
+    border: 2px solid #22c55e;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 1002;
+  
+    /* Larghezza auto con tetto a 15 icone (44px) + 14 gap (8px) */
+    width: auto;
+    max-width: calc(15 * 44px + 14 * 8px);
+    padding: 10px;
+  }
+  
+  
+  /* FULL MODAL (All options) – CENTRATO E GRANDE */
+  .cf-fullpanel{
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1003;
+    width: min(920px, calc(100vw - 40px));
+    max-height: min(80vh, 820px);
+    overflow: auto;
+    background: #fff;
+    border: 2px solid #22c55e;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    padding: 10px;
+  }
+  .cf-modal-open{ overflow:hidden; } /* blocca scroll sotto il modal */
+  
+  .cf-fullpanel-head{
+    display: flex; align-items:center; justify-content: space-between;
+    padding: 4px 6px 10px 6px; border-bottom: 1px solid rgba(34,197,94,0.25);
+  }
+  .cf-fullpanel-head .cf-close{
+    border: 1px solid #22c55e; background:#f0fff4; color:#065f46;
+    border-radius: 8px; width: 32px; height: 28px; cursor: pointer;
+  }
+  .cf-fullpanel-body{
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px; padding-top: 10px;
+  }
+  .cf-card{
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px;
+  }
+  .cf-card-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:8px;
+  }
+  .cf-card-subgrid{
+    display:flex; flex-wrap: wrap; gap:8px;
+  }
+  .cf-card .cf-family-btn,
+  .cf-card .cf-sub-btn{
+    width: 56px; height: 56px; /* più grandi nel modal */
+  }
+  .cf-card .cf-sub-btn{ width: 50px; height: 50px; }
+  
+  /* Responsive */
+  @media (max-width: 1200px){
+    #category-filter.cf{ width: 320px; }
+  }
+  @media (max-width: 980px){
+    #category-filter .cf-grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 720px){
+    #category-filter.cf{ left: 10px; right: 10px; width: auto; }
+    #category-filter .cf-grid{ grid-template-columns: 1fr; }
+    .cf-fullpanel{ width: calc(100vw - 20px); }
+  }    
+
+  /* Assicura che tutte le immagini nei bottoni circolari siano quadrate e riempiano il cerchio */
+#category-filter .cf-family-btn img,
+#category-filter .cf-sub-btn img,
+.cf-popover .cf-sub-btn img,
+.cf-fullpanel .cf-sub-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
-.category-btn.active {
-  border-color: #b00 !important;
-  box-shadow: 0 0 0 2px #b00 !important;
+/* Specifica per le subcategorie nel popover */
+.cf-popover .cf-sub-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(34,197,94,0.45);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  padding: 0;
+  overflow: hidden;
 }
 
-.category-btn:hover {
-  transform: scale(1.05) !important;
+/* Specifica per le subcategorie nel modal "All options" */
+.cf-fullpanel .cf-sub-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(34,197,94,0.45);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  padding: 0;
+  overflow: hidden;
 }
 
-.subcategory-container {
-  position: absolute !important;
-  display: none;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 1002 !important;
-  border: 1px solid #ccc;
+/* Stati attivi e hover */
+.cf-popover .cf-sub-btn.active,
+.cf-fullpanel .cf-sub-btn.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18) inset;
 }
 
-.subcategory-btn {
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50% !important;
-  border: 2px solid rgba(17, 49, 235, 0.3) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-  position: relative;
-}
-.subcategory-container::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  width: 2px !important;
-  height: 12px !important;
-  background: #b00 !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+.cf-popover .cf-sub-btn:hover,
+.cf-fullpanel .cf-sub-btn:hover {
+  transform: scale(1.05);
 }
 
-.subcategory-btn.active {
-  outline: 3px solid #b00 !important;
-  outline-offset: -3px !important;
+/* Specifica per le category_1 nel modal "All options" */
+.cf-fullpanel .cf-family-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(34,197,94,0.45);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0; /* Importante: previene il ridimensionamento */
 }
 
-.subcategory-btn:hover {
-  transform: scale(1.1) !important;
+.cf-fullpanel .cf-family-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.cf-fullpanel .cf-family-btn.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18) inset;
+}
+
+.cf-fullpanel .cf-family-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Assicura che la riga della card nel modal mantenga l'allineamento corretto */
+.cf-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  min-height: 56px; /* Altezza minima per contenere il bottone */
+}
+
+.cf-card-row span {
+  flex: 1;
+  min-width: 0; /* Permette al testo di troncarsi correttamente */
 }
 
 /* Pulsante reset */
@@ -588,7 +810,7 @@ input:checked + .slider:before {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  border: 2px solid rgba(67, 97, 238, 0.7);
+  border: 2px solid rgba(34, 197, 94, 0.7);
   box-shadow: 0 0 8px rgba(0,0,0,0.1);
   object-fit: cover;
   background-color: white;
@@ -726,6 +948,39 @@ input:checked + .slider:before {
 /* === Wrapper esterno singola categoria === */
 .category-wrapper {
   position: relative;
+}
+
+/* Slim collapse: minimo indispensabile */
+#category-filter.cf-collapsed{
+  width: 120px;                    /* restringi il box */
+  max-height: calc(100vh - 120px); /* come prima */
+}
+
+/* In header, mostra solo il bottone "Show" */
+#category-filter.cf-collapsed .cf-header > :not(.cf-collapse){
+  display: none !important;
+}
+#category-filter.cf-collapsed .cf-collapse{
+  justify-self: center;
+}
+
+/* Griglia: una sola colonna e solo la prima colonna visibile */
+#category-filter.cf-collapsed .cf-grid{
+  grid-template-columns: 1fr;
+}
+
+/* Nascondi colonne 2 e 3 (mantieni già il tuo cutoff ai primi 5) */
+#category-filter.cf-collapsed .cf-col:not(:first-child){
+  display: none !important;
+}
+
+/* Riduci padding interni per compattezza */
+#category-filter.cf-collapsed{
+  padding: 6px 8px;
+}
+#category-filter.cf-collapsed .cf-grid{
+  padding: 8px;
+  gap: 10px;
 }
 
     /*tutorial*/
@@ -957,3 +1212,26 @@ input:checked + .slider:before {
    }
    #dashboard .dq-help:hover + .dq-tooltip,
    #dashboard .dq-help:focus + .dq-tooltip{ display:block; } 
+
+  /* fallback se il plugin MCG non rispetta 'pane' */
+  .leaflet-container.objects-hidden .cluster-icon,
+  .leaflet-container.objects-hidden .object-icon { display:none !important; pointer-events:none !important; }
+
+  #stype-toolbar{
+  position:absolute; top:10px; left:64px; z-index:1000;
+  background:rgba(255,255,255,.96);
+  border:1px solid #cbd5e1; border-radius:12px;
+  padding:6px 8px; display:flex; gap:8px; align-items:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+#stype-toolbar .stype-btn{
+  width:36px; height:36px; border-radius:50%;
+  border:2px solid #94a3b8; background:#fff; padding:3px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+#stype-toolbar .stype-btn img{ width:24px; height:24px; object-fit:contain; }
+#stype-toolbar .stype-btn.active{
+  border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.25);
+}
+

@@ -8,16 +8,41 @@ class Dashboard {
     this.fieldData = {};
     this.ambiti = {};
     this.debounceTimer = null;
+    
+    this.loadSites = async () => {
+
+      // Se la mappa è già pronta, riusa i dati senza rifetch
+      if (window.mapManager?.sitiFeatures?.length) {
+        this.allSites = window.mapManager.sitiFeatures;
+        return;
+      }
+      // Altrimenti fai il fetch diretto del GeoJSON
+      const response = await fetch(getPath("data/siti.geojson"));
+      const geojson = await response.json();
+      this.allSites = geojson.features || [];
+    };
+
     this.init();
   }
-
+  
   async init() {
+    // 1) carica definizioni dei campi per popolare i pulsanti
     await this.loadFieldData();
+  
+    // 2) carica tutti i siti e costruisci la lista annidata Regione → Provincia → Sito
+    await this.loadSites();
+    this.rebuildSitesList();
+  
+    // 3) UI
     this.createHeader();
     this.createAmbitoButtons();
     this.setupEventListeners();
-    await this.loadMappedSites();
+    this.updateSelectedFields();
+    this.createDownloadEntry();
     this.createFooter();
+  
+    // (opzionale) manda lo stato iniziale alla mappa
+    this.sendToMap();
   }
 
   createHeader() {
@@ -28,7 +53,26 @@ class Dashboard {
     logo.src = getPath('images/logo_semplificato.png');
     logo.alt = 'Project Logo';
     logo.className = 'dashboard-logo';
-    
+
+    // 🔗 Trigger tutorial
+    logo.title = 'Show tutorial';
+    logo.setAttribute('role', 'button');
+    logo.setAttribute('tabindex', '0');
+    logo.style.cursor = 'pointer';
+
+    const openTutorial = () => {
+      if (document.querySelector('.tutorial-overlay')) return;
+      new Tutorial();
+    };
+
+    logo.addEventListener('click', openTutorial);
+    logo.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openTutorial();
+      }
+    });
+
     header.appendChild(logo);
     document.getElementById('sidebar').prepend(header);
   }
@@ -36,31 +80,39 @@ class Dashboard {
   async loadFieldData() {
     const response = await fetch(getPath("data/spiegazione_dati.csv"));
     const csvText = await response.text();
-    const data = Papa.parse(csvText, { header: true }).data;
-
+  
+    // salta righe vuote e usa header
+    const data = Papa.parse(csvText, { header: true, skipEmptyLines: 'greedy' }).data;
+  
+    this.fieldData = {};
+    this.ambiti = {};
+  
     data.forEach(row => {
-      if (!row.ambito || !row.DENOMINAZIONE) return;
-      
-      const fieldName = row.DENOMINAZIONE?.trim();
-      if (!row.ambito || !fieldName) return;
-      
-      this.fieldData[fieldName] = {
-        id: row.ID.trim(),
-        ambito: row.ambito.trim(),
-        definition: row.DEFINIZIONE?.trim() || "",
+      // normalizza e verifica campi minimi
+      const ambito = (row?.ambito || '').trim();
+      const denominazione = (row?.DENOMINAZIONE || '').trim();
+      const id = (row?.ID || '').trim();
+      const definizione = (row?.DEFINIZIONE || '').trim();
+  
+      if (!ambito || !denominazione || !id) return; // ignora righe incomplete
+  
+      this.fieldData[denominazione] = {
+        id,
+        ambito,
+        definition: definizione
       };
-      
-      if (!this.ambiti[row.ambito]) {
-        this.ambiti[row.ambito] = {
+  
+      if (!this.ambiti[ambito]) {
+        this.ambiti[ambito] = {
           fields: [],
           definitions: new Set()
         };
       }
-      
-      this.ambiti[row.ambito].fields.push(fieldName);
-      this.ambiti[row.ambito].definitions.add(row.DEFINIZIONE);
-    });  
-  }
+  
+      this.ambiti[ambito].fields.push(denominazione);
+      if (definizione) this.ambiti[ambito].definitions.add(definizione);
+    });
+  }  
 
   createAmbitoButtons() {
     const container = document.getElementById('ambito-buttons');
@@ -77,51 +129,55 @@ class Dashboard {
       
       const description = document.createElement('div');
       description.className = 'ambito-description';
-      description.textContent = [...this.ambiti[ambito].definitions][0];
-      description.style.display = 'none';
       
       const fieldsContainer = document.createElement('div');
-      fieldsContainer.className = 'fields-container';
-      fieldsContainer.style.display = 'none';
+      fieldsContainer.className = 'fields-container'; // chiusa di default (CSS)
       
+      // toggle items
       this.ambiti[ambito].fields.forEach(field => {
         const fieldId = `field-${field}`;
         const fieldWrapper = document.createElement('div');
-        fieldWrapper.className = 'field-wrapper';
-        
+        fieldWrapper.className = 'field-wrapper fancy-toggle';
+      
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = fieldId;
         checkbox.dataset.field = field;
-        
+        checkbox.className = 'toggle-input';
+      
+        // default attivi per "context type"
+        if ((this.fieldData[field]?.ambito || '').toLowerCase() === 'context type') {
+          checkbox.checked = true;
+        }
+      
         const label = document.createElement('label');
+        label.className = 'toggle-label';
         label.htmlFor = fieldId;
-        label.textContent = `${field} (${this.fieldData[field].id})`;
-        label.className = 'field-label';
-        
+        label.innerHTML = `
+          <span class="toggle-slider" aria-hidden="true"></span>
+          <span class="toggle-text">${field} (${this.fieldData[field].id})</span>
+        `;
+      
         fieldWrapper.appendChild(checkbox);
         fieldWrapper.appendChild(label);
         fieldsContainer.appendChild(fieldWrapper);
-      });
+      });      
       
       ambitoContainer.appendChild(button);
       ambitoContainer.appendChild(description);
       ambitoContainer.appendChild(fieldsContainer);
       container.appendChild(ambitoContainer);
+      
     });
   }
 
   setupEventListeners() {
     document.getElementById('ambito-buttons').addEventListener('click', (e) => {
       if (e.target.classList.contains('ambito-button')) {
-        const ambito = e.target.dataset.ambito;
         const container = e.target.closest('.ambito-container');
-        const description = container.querySelector('.ambito-description');
-        const fields = container.querySelector('.fields-container');
-        
-        description.style.display = description.style.display === 'none' ? 'block' : 'none';
-        fields.style.display = fields.style.display === 'none' ? 'grid' : 'none';
-        
+        const isOpen = container.classList.toggle('open');
+        e.target.setAttribute('aria-expanded', String(isOpen));
+        // niente style inline: gestisce il CSS
         this.updateSelectedFields();
       }
     });
@@ -135,182 +191,232 @@ class Dashboard {
 
   updateSelectedFields() {
     this.selectedFields.clear();
-    
-    document.querySelectorAll('.fields-container input[type="checkbox"]:checked').forEach(checkbox => {
-      this.selectedFields.add(checkbox.dataset.field);
-    });
-    
+  
+    document
+      .querySelectorAll('.fields-container input[type="checkbox"]:checked')
+      .forEach(checkbox => this.selectedFields.add(checkbox.dataset.field));
+  
     this.sendToMap();
-  }
-
-  async loadMappedSites() {
-    try {
-      const response = await fetch(getPath("data/siti.geojson"));
-      const geojson = await response.json();
   
-      const mappedSites = geojson.features.filter(
-        f => f.properties?.mapped === true
-      );
-  
-      const container = document.getElementById('mapped-sites-container');
-      container.innerHTML = '<h3>Current Mapped Necropolis</h3>';
-      
-      // Group by region based on current mode
-      const groupedSites = {};
-      mappedSites.forEach(site => {
-        const region = window.mapManager.groupByAncientRegion 
-          ? site.properties.historical_region 
-          : site.properties.modern_region;
-        
-        if (!groupedSites[region]) {
-          groupedSites[region] = [];
-        }
-        groupedSites[region].push(site);
-      });
-  
-      // Create accordion for each region
-      Object.keys(groupedSites).sort().forEach(region => {
-        if (!region) return;
-        
-        const regionAccordion = document.createElement('div');
-        regionAccordion.className = 'region-accordion';
-        
-        const regionHeader = document.createElement('button');
-        regionHeader.className = 'region-header';
-        regionHeader.textContent = `${region} (${groupedSites[region].length})`;
-        
-        const regionList = document.createElement('ul');
-        regionList.className = 'region-list';
-        regionList.style.display = 'none';
-        
-        groupedSites[region].forEach(site => {
-          const li = document.createElement('li');
-          const btn = document.createElement('button');
-  
-          btn.textContent = site.properties.placeName || 'Unnamed site';
-          btn.className = 'mapped-site-button';
-          btn.dataset.fid = site.properties.fid;
-  
-          btn.addEventListener('click', () => {
-            const mapName = site.properties.map;
-            const fid = site.properties.fid;
-            if (mapName) {
-              window.location.href = getPath(`record_necropoli/necropoli/index.html?fid=${fid}`);
-            }
-          });
-  
-          li.appendChild(btn);
-          regionList.appendChild(li);
-        });
-        
-        regionHeader.addEventListener('click', () => {
-          regionList.style.display = regionList.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        regionAccordion.appendChild(regionHeader);
-        regionAccordion.appendChild(regionList);
-        container.appendChild(regionAccordion);
-      });
-  
-    } catch (err) {
-      console.error("Error loading mapped sites:", err);
+    // aggiorna le barre della timeline (se presente)
+    if (window.timeline) {
+      window.timeline.updateBars([...this.selectedFields]);
     }
+  }
+  
+  rebuildSitesList() {
+    if (!this.allSites) return;
+  
+    const container = document.getElementById('mapped-sites-container');
+    container.innerHTML = '<h3>Siti</h3>';
+  
+    // Raggruppa: Regione → Provincia → Siti
+    const byRegion = {};
+    this.allSites.forEach(site => {
+      const region = site.properties.region || '—';
+      const province = site.properties.province || '—';
+      if (!byRegion[region]) byRegion[region] = {};
+      if (!byRegion[region][province]) byRegion[region][province] = [];
+      byRegion[region][province].push(site);
+    });
+  
+// Costruisci accordion annidato con caret separato
+Object.keys(byRegion).sort().forEach(region => {
+  const regionAcc = document.createElement('div');
+  regionAcc.className = 'region-accordion';
+
+  // riga titolo regione: [caret]  Regione (N)  → click su titolo = apri pagina, click su caret = toggle
+  const regionRow = document.createElement('div');
+  regionRow.className = 'region-row';
+
+  const regionCaret = document.createElement('button');
+  regionCaret.className = 'caret';
+  regionCaret.setAttribute('aria-label', `Espandi ${region}`);
+  regionCaret.textContent = '▸';
+
+  const regionBtn = document.createElement('button');
+  regionBtn.className = 'region-title';
+  const regionCount = Object.values(byRegion[region]).reduce((acc, arr) => acc + arr.length, 0);
+  regionBtn.textContent = `${region} (${regionCount})`;
+
+  // click su titolo Regione → vai alla pagina per regione
+  regionBtn.addEventListener('click', () => {
+    window.location.href = getPath(`record_necropoli/necropoli/index.html?region=${encodeURIComponent(region)}`);
+  });
+
+  // wrapper province
+  const provincesWrap = document.createElement('div');
+  provincesWrap.className = 'region-list';
+  provincesWrap.style.display = 'none';
+
+  // caret: apre/chiude solo il gruppo, non naviga
+  regionCaret.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = provincesWrap.style.display === 'none';
+    provincesWrap.style.display = open ? 'block' : 'none';
+    regionCaret.classList.toggle('open', open);
+  });
+
+  regionRow.appendChild(regionCaret);
+  regionRow.appendChild(regionBtn);
+  regionAcc.appendChild(regionRow);
+
+  // Provinces
+  Object.keys(byRegion[region]).sort().forEach(prov => {
+    const provAcc = document.createElement('div');
+    provAcc.className = 'province-accordion';
+
+    const provRow = document.createElement('div');
+    provRow.className = 'province-row';
+
+    const provCaret = document.createElement('button');
+    provCaret.className = 'caret';
+    provCaret.setAttribute('aria-label', `Espandi ${prov}`);
+    provCaret.textContent = '▸';
+
+    const provBtn = document.createElement('button');
+    provBtn.className = 'province-title';
+    provBtn.textContent = `${prov} (${byRegion[region][prov].length})`;
+
+    // click su titolo Provincia → vai alla pagina per provincia
+    provBtn.addEventListener('click', () => {
+      window.location.href = getPath(`record_necropoli/necropoli/index.html?province=${encodeURIComponent(prov)}`);
+    });
+
+    const sitesUl = document.createElement('ul');
+    sitesUl.className = 'province-sites';
+    sitesUl.style.display = 'none';
+
+    byRegion[region][prov]
+      .sort((a, b) => (a.properties.name || '').localeCompare(b.properties.name || ''))
+      .forEach(site => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        const typ = site.properties.typology || '—';
+        const name = site.properties.name || 'Unnamed site';
+        btn.textContent = `${name} (${typ})`;
+        btn.className = 'mapped-site-button';
+        btn.dataset.fid = site.properties.fid;
+
+        btn.addEventListener('click', () => {
+          const fid = site.properties.fid;
+          if (fid != null) {
+            window.location.href = getPath(`record_necropoli/necropoli/index.html?fid=${encodeURIComponent(fid)}`);
+          }
+        });
+
+        li.appendChild(btn);
+        sitesUl.appendChild(li);
+      });
+
+    // caret provincia: apre/chiude la lista siti
+    provCaret.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = sitesUl.style.display === 'none';
+      sitesUl.style.display = open ? 'block' : 'none';
+      provCaret.classList.toggle('open', open);
+    });
+
+    provRow.appendChild(provCaret);
+    provRow.appendChild(provBtn);
+    provAcc.appendChild(provRow);
+    provAcc.appendChild(sitesUl);
+    provincesWrap.appendChild(provAcc);
+  });
+
+  regionAcc.appendChild(provincesWrap);
+  container.appendChild(regionAcc);
+});
+  }  
+
+  createDownloadEntry() {
+    const legend = document.getElementById('legend');
+    if (!legend) return;
+  
+    const wrap = document.createElement('div');
+    wrap.id = 'download-entry';
+    wrap.className = 'download-entry-card';
+  
+    // icona download (SVG inline, stile leggero)
+    const icon = document.createElement('div');
+    icon.className = 'download-icon';
+    icon.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>`;
+  
+    const text = document.createElement('div');
+    text.className = 'download-text';
+    text.innerHTML = `<h3>Download</h3>`;
+  
+    const btn = document.createElement('button');
+    btn.className = 'download-entry-btn';
+    btn.type = 'button';
+    btn.textContent = 'explore and download the dataset';
+    btn.addEventListener('click', () => {
+      window.location.href = getPath('download/download_page.html');
+    });
+  
+    wrap.appendChild(icon);
+    wrap.appendChild(text);
+    wrap.appendChild(btn);
+  
+    // Inserisci subito dopo la sezione Legend
+    legend.insertAdjacentElement('afterend', wrap);
   }
 
   createFooter() {
     const footer = document.createElement('div');
     footer.className = 'dashboard-footer';
-    
-    const sourcesTitle = document.createElement('h4');
-    sourcesTitle.textContent = 'Data Sources';
-    footer.appendChild(sourcesTitle);
-    
-    const sourcesList = document.createElement('ul');
-    sourcesList.className = 'sources-list';
-    
-    const sources = [
-      {
-        text: 'data from sites',
-        linkText: 'Mycenean Atlas Project',
-        url: 'https://helladic.info/index.php',
-        license: 'CC 4.0'
-      },
-      {
-        text: 'modern regions',
-        linkText: 'Greek Ministry of the Interior and Administrative Reconstruction',
-        url: 'http://geodata.gov.gr/en/dataset/periphereies-elladas',
-        license: 'CC 3.0'
-      },
-      {
-        text: 'ancient region',
-        linkText: 'made by the author',
-        url: '',
-        description: 'loosely based on classical historical regions'
-      }
-    ];
-    
-    sources.forEach(source => {
-      const li = document.createElement('li');
-      li.className = 'source-item';
-      
-      const textSpan = document.createElement('span');
-      textSpan.textContent = `${source.text} → `;
-      
-      if (source.url) {
-        const link = document.createElement('a');
-        link.href = source.url;
-        link.target = '_blank';
-        link.textContent = source.linkText;
-        textSpan.appendChild(link);
-      } else {
-        textSpan.textContent += source.linkText;
-      }
-      
-      if (source.license) {
-        const licenseSpan = document.createElement('span');
-        licenseSpan.textContent = ` ${source.license}`;
-        textSpan.appendChild(licenseSpan);
-      } else if (source.description) {
-        const descSpan = document.createElement('span');
-        descSpan.className = 'source-description';
-        descSpan.textContent = ` (${source.description})`;
-        textSpan.appendChild(descSpan);
-      }
-      
-      li.appendChild(textSpan);
-      sourcesList.appendChild(li);
-    });
-    
-    footer.appendChild(sourcesList);
-    
+
+    // --- SOLO Project Credits, con pannello viola e nuovo testo ---
     const credits = document.createElement('div');
-    credits.className = 'credits';
-    
+    credits.className = 'credits credits--panel';
+
     const creditsTitle = document.createElement('h4');
     creditsTitle.textContent = 'Project Credits';
     credits.appendChild(creditsTitle);
-    
+
+    // blocco istituzionale richiesto
+    const grant = document.createElement('div');
+    grant.className = 'credits-grant';
+    grant.innerHTML = `
+      <p><strong>This website is intended as an online output of:</strong></p>
+      <p>
+        Project PE 0000020 CHANGES - CUP B53C22003780006, NRP Mission 4<br/>
+        Component 2 Investment 1.3, Funded by the European Union - NextGenerationEU
+      </p>
+      <p style="margin-top:.5rem;"><strong>Directed by:</strong></p>
+      <img src="${getPath('images/icons/logo_sapienza.png')}" alt="Sapienza" class="credits-sapienza" />
+    `;
+    credits.appendChild(grant);
+
+    // (poi come prima) — autore, logo, contatto
     const author = document.createElement('div');
     author.className = 'author-info';
-    
+
     const authorText = document.createElement('p');
     authorText.textContent = 'Produced and maintained by:';
     author.appendChild(authorText);
-    
+
     const authorLogo = document.createElement('img');
-    authorLogo.src = 'images/logo_erasmo.svg';
+    authorLogo.src = getPath('images/logo_erasmo.svg');
     authorLogo.alt = 'Erasmo di Fonso';
     authorLogo.className = 'author-logo';
     author.appendChild(authorLogo);
-    
+
     const contact = document.createElement('p');
     contact.className = 'contact-info';
     contact.innerHTML = 'For questions or support please contact: <a href="mailto:erasmo.difonso@libero.it">erasmo.difonso@libero.it</a>';
     author.appendChild(contact);
-    
+
     credits.appendChild(author);
     footer.appendChild(credits);
-    
+
+    // Append finale
     document.getElementById('sidebar').appendChild(footer);
   }
 
@@ -331,9 +437,11 @@ class Dashboard {
 document.addEventListener('DOMContentLoaded', () => {
   window.dashboard = new Dashboard();
   
-  // Avvia il tutorial dopo un breve ritardo
-  setTimeout(() => {
-    new Tutorial();
-  }, 1000);
+  // Avvia il tutorial solo al primo ingresso
+  const TUTORIAL_STORAGE_KEY = 'arborea_tutorial_seen_v1';
+  const alreadySeen = (() => { try { return localStorage.getItem(TUTORIAL_STORAGE_KEY) === '1'; } catch { return false; } })();
+  if (!alreadySeen) {
+    setTimeout(() => { new Tutorial(); }, 1000);
+  }
 });
 

@@ -1,0 +1,146 @@
+/* ====== SBLOCCA DIMENSIONI POPUP LEAFLET ====== */
+.leaflet-popup-content-wrapper { max-width: 880px !important; } /* prima 980 */
+.popup-tomba-wrapper.popup-large,
+.popup-wrapper.popup-large {
+  width: clamp(540px, 56vw, 800px);
+  max-width: 800px;
+}
+
+
+/* ====== DIMENSIONI POPUP SPECIFICHE ====== */
+.popup-tomba-wrapper.popup-large .ctx-geom-box {
+  max-width: 560px;    
+  margin-left: auto;
+  margin-right: auto;  
+}
+
+.popup-tomba-wrapper.popup-large .ctx-geom-box--context {
+  max-width: 600px;
+  margin: 0 auto 10px;
+}
+
+.popup-tomba-wrapper.popup-large .ctx-head {
+  max-width: min(52%, 360px);  
+}
+
+.popup-tomba-title {
+  font-weight: 800;
+  color: #4a3a7a;
+  margin-bottom: 8px;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+/* KPI sintetici */
+.popup-tomba-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 6px 0 8px;
+}
+.popup-tomba-info .info-item { display:flex; gap:6px; align-items:baseline; font-size:13px; }
+.popup-tomba-info .info-label { color:#666; font-weight:600; }
+.popup-tomba-info .info-value { color:#222; }
+
+.tomb-switcher {
+  display:flex; align-items:center; gap:8px; margin:6px 0 10px;
+}
+.ts-btn {
+  appearance:none; border:1px solid #ddd; padding:6px 10px; border-radius:8px;
+  background:#fff; cursor:pointer; font-weight:600; font-size:12px;
+}
+.ts-btn.active { border-color:#7e57c2; box-shadow:0 0 0 2px rgba(126,87,194,.12) inset; }
+.scale-badge { font-size:11px; color:#6b7280; border:1px dashed #cbd5e1; padding:2px 6px; border-radius:6px; }
+
+/* ====== GEOMETRIA + HEADER IN ALTO A DESTRA ====== */
+.ctx-geom-box {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 6px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+.ctx-geom-box--context { margin-bottom: 10px; }
+
+.ctx-geom-svg { display:block; width:100%; height:auto; border-radius:10px; }
+
+/* Header in alto a destra con nome + cronologia + bottone */
+.ctx-head{
+  position:absolute;
+  top:10px; right:10px;
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:10px;
+  padding:8px 10px;
+  max-width:min(60%, 420px);
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+.ctx-head-title{ font-weight:800; color:#4a3a7a; font-size:14px; text-align:right; }
+.ctx-head-chron{ font-size:12px; color:#374151; text-align:right; }
+
+.ctx-open{
+  display:inline-block; background:#2563eb; color:#fff !important;
+  padding:6px 10px; border-radius:8px; text-decoration:none; font-weight:700; font-size:12px; line-height:1;
+}
+.ctx-open:hover{ filter:brightness(1.05); }
+
+/* ====== INFO BASE ====== */
+.tomb-info-box { margin-top: 10px; }
+.tomb-info--base {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+}
+.tomb-info-row {
+  display:grid; grid-template-columns: 180px 1fr;
+  gap:8px 12px; align-items:baseline;
+  padding:6px 0; border-bottom:1px dashed #eef2f7;
+}
+.tomb-info-row:last-child { border-bottom:0; }
+.tomb-info-k { color:#6b7280; font-weight:600; font-size:12px; }
+.tomb-info-v a { color:#2563eb; text-decoration:none; }
+.tomb-info-v a:hover { text-decoration:underline; }
+
+/* ====== CONTEXTS CAROUSEL ====== */
+.ctx-carousel { position:relative; display:flex; flex-direction:column; gap:8px; }
+.ctx-viewport { position:relative; min-height: 260px; }
+.ctx-card-inner { display:block; }
+
+/* frecce / dots */
+.ctx-nav {
+  position:absolute; top:50%; transform:translateY(-50%);
+  border:1px solid rgba(0,0,0,0.1); background:#fff; border-radius:8px;
+  width:34px; height:34px; cursor:pointer;
+}
+.ctx-nav.prev { left:0; }
+.ctx-nav.next { right:0; }
+
+.ctx-dots {
+  display:flex; gap:6px; justify-content:center; margin-top:2px;
+}
+.ctx-dots .dot{ width:8px; height:8px; border-radius:999px; background:#ddd; cursor:pointer; }
+.ctx-dots .dot.active{ background:#7e57c2; }
+
+/* ====== PORTALS ====== */
+.portal-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; }
+.portal-btn { display:flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:8px; text-decoration:none; font-weight:700; }
+.portal-btn.ok { background:#e9fbe7; color:#166534; border:1px solid #86efac; }
+.portal-btn.ko { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; pointer-events:none; opacity:.7; }
+
+/* bubbles nell'header in alto a destra del carosello */
+.ctx-head-row{
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.ctx-head-row .lab{
+  font-weight:700;
+  color:#374151;
+  font-size:11px;
+}
+.ctx-head .bubble-wrap{ justify-content:flex-end; }

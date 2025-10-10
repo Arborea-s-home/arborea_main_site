@@ -1,235 +1,260 @@
 // object_affinity.js
 
-const defaultWeights = {
-  "strumento": 1,
-  "funzione": 1,
-  "funzione_specifica": 1,
-  "materiale": 1,
-  "materiale_specifico": 1,
-  "decorazione_theme": 1
+/**
+ * Similarità per SAMPLES + CONTEXT
+ *
+ * Attributi (sample):
+ *  - precise_taxon, Family, genus, s_type, s_part, s_foss, qt
+ * Attributi (context, join contesti.fid = samples.context_id):
+ *  - typology, chronology_iccd
+ *
+ * Tripla: (Family, genus, s_type)
+ * Hard rule (esclusione): similarità = 0 se NON coincide almeno
+ * uno tra {precise_taxon, genus, Family}
+ */
+
+export const DEFAULT_WEIGHTS = {
+  precise_taxon: 1,
+  Family: 1,
+  genus: 1,
+  s_type: 1,
+  s_part: 1,
+  s_foss: 1,
+  typology: 1,
+  qt: 1,
+  chronology_iccd: 1
 };
 
-let userWeights = { ...defaultWeights };
-let userTriple = ["funzione", "materiale", "decorazione_theme"];
-let staticKey = "tipologia";
+const TRIPLE_ATTRS = ["Family", "genus", "s_type"];
+
+let userWeights = { ...DEFAULT_WEIGHTS };
 let contaValori = {};
 let contaTriple = {};
 
+// API pesi
 export function updateWeights(newWeights) {
-  userWeights = { ...newWeights };
-  console.log("🔧 Weights aggiornati in object_affinity.js:", userWeights);
+  userWeights = { ...DEFAULT_WEIGHTS, ...newWeights };
 }
-
-export function updateTriple(newTriple) {
-  if (newTriple.length === 3) userTriple = [...newTriple];
+export function resetWeights() {
+  userWeights = { ...DEFAULT_WEIGHTS };
 }
-
-export function setStaticKey(key) {
-  staticKey = key;
-}
-
 export function getCurrentConfig() {
-  return {
-    weights: userWeights,
-    triple: userTriple,
-    staticKey
-  };
+  return { weights: { ...userWeights } };
 }
 
-export function calcolaAffinitaOggettiSingolo(oggettoBase, oggettiTotali) {
-  const attributiOggetto = Object.keys(defaultWeights);
+// Helpers
+function tokensFrom(value) {
+  if (value === null || value === undefined) return [];
+  if (typeof value === "number" || typeof value === "boolean") return [String(value)];
+  const s = String(value).trim();
+  if (!s) return [];
+  const parts = s.split(/[;,/]+/).map(v => v.trim()).filter(Boolean);
+  return parts.length ? parts : [s];
+}
 
-  // Frequenze singole
-  contaValori = {};
-  oggettiTotali.forEach(o => {
-    attributiOggetto.forEach(attr => {
-      const raw = o.properties[attr];
-      if (!raw) return;
-      raw.split(",").map(s => s.trim()).forEach(val => {
+function buildFrequencies(features, attrs) {
+  const counts = {};
+  features.forEach(f => {
+    const p = f.properties || {};
+    attrs.forEach(attr => {
+      tokensFrom(p[attr]).forEach(val => {
         const key = `${attr}::${val}`;
-        contaValori[key] = (contaValori[key] || 0) + 1;
+        counts[key] = (counts[key] || 0) + 1;
       });
     });
   });
+  return counts;
+}
 
-  // Frequenze triple
-  contaTriple = {};
-  oggettiTotali.forEach(o => {
-    const triple = userTriple.map(attr =>
-      (o.properties[attr] || "").split(",").map(s => s.trim()).filter(Boolean)
-    );
-    if (triple.some(arr => arr.length === 0)) return;
-
-    triple[0].forEach(v1 => {
-      triple[1].forEach(v2 => {
-        triple[2].forEach(v3 => {
-          const key = `${v1}::${v2}::${v3}`;
-          contaTriple[key] = (contaTriple[key] || 0) + 1;
-        });
-      });
-    });
+function buildTripleFrequencies(features) {
+  const counts = {};
+  features.forEach(f => {
+    const p = f.properties || {};
+    const A = tokensFrom(p[TRIPLE_ATTRS[0]]);
+    const B = tokensFrom(p[TRIPLE_ATTRS[1]]);
+    const C = tokensFrom(p[TRIPLE_ATTRS[2]]);
+    if (!A.length || !B.length || !C.length) return;
+    A.forEach(a => B.forEach(b => C.forEach(c => {
+      const key = `${a}::${b}::${c}`;
+      counts[key] = (counts[key] || 0) + 1;
+    })));
   });
+  return counts;
+}
 
-  // Pesi singoli
-  const peso = {};
-  for (const key in contaValori) {
+function buildTokenWeights(counts) {
+  const w = {};
+  for (const key of Object.keys(counts)) {
     const [attr] = key.split("::");
-    peso[key] = (1 / Math.sqrt(contaValori[key])) * (userWeights[attr] || 1);
+    const base = 1 / Math.sqrt(counts[key]);
+    const attrW = userWeights[attr] ?? 1;
+    w[key] = base * attrW;
   }
+  return w;
+}
 
-  // Pesi triple
-  const pesoTriple = {};
-  for (const key in contaTriple) {
-    pesoTriple[key] = 1 / Math.sqrt(contaTriple[key]);
-  }
+/** Weighted Jaccard numeratore/denominatore (per poter aggiungere bonus) */
+function weightedJaccardNumDen(p1, p2, attrs, tokenWeights) {
+  let num = 0;
+  let den = 0;
 
-  // Matching statico (es. tipologia)
-  function similaritaStatica(o1, o2) {
-    if (!staticKey) return 0;
-    const v1 = o1.properties[staticKey];
-    const v2 = o2.properties[staticKey];
-    if (v1 && v2 && v1 === v2) {
-      return 1 / Math.sqrt(
-        oggettiTotali.filter(o => o.properties[staticKey] === v1).length
-      );
-    }
-    return 0;
-  }
+  attrs.forEach(attr => {
+    const a1 = tokensFrom(p1[attr]);
+    const a2 = tokensFrom(p2[attr]);
+    if (!a1.length && !a2.length) return;
 
-  function similarita(obj1, obj2) {
-    let sim = 0;
-    let pesoMax = 0;
+    const set1 = new Set(a1);
+    const set2 = new Set(a2);
+    const union = new Set([...set1, ...set2]);
 
-    attributiOggetto.forEach(attr => {
-      const val1 = obj1.properties[attr];
-      const val2 = obj2.properties[attr];
-      if (!val1 || !val2) return;
-
-      const arr1 = val1.split(",").map(s => s.trim());
-      const arr2 = val2.split(",").map(s => s.trim());
-
-      const unione = [...new Set([...arr1, ...arr2])];
-      unione.forEach(val => {
-        const key = `${attr}::${val}`;
-        pesoMax += peso[key] || 0;
-      });
-
-      const comuni = arr1.filter(val => arr2.includes(val));
-      comuni.forEach(val => {
-        const key = `${attr}::${val}`;
-        sim += peso[key] || 0;
-      });
+    union.forEach(val => {
+      const key = `${attr}::${val}`;
+      den += tokenWeights[key] || (userWeights[attr] ?? 1);
     });
 
-    // Bonus su triple
-    const triple1 = userTriple.map(attr =>
-      (obj1.properties[attr] || "").split(",").map(v => v.trim()).filter(Boolean)
-    );
-    const triple2 = userTriple.map(attr =>
-      (obj2.properties[attr] || "").split(",").map(v => v.trim()).filter(Boolean)
-    );
-
-    let bonus = 0;
-    triple1[0].forEach(v1 => {
-      triple1[1].forEach(v2 => {
-        triple1[2].forEach(v3 => {
-          const key = `${v1}::${v2}::${v3}`;
-          if (
-            triple2[0].includes(v1) &&
-            triple2[1].includes(v2) &&
-            triple2[2].includes(v3)
-          ) {
-            bonus += pesoTriple[key] || 0;
-          }
-        });
-      });
+    a1.forEach(val => {
+      if (set2.has(val)) {
+        const key = `${attr}::${val}`;
+        num += tokenWeights[key] || (userWeights[attr] ?? 1);
+      }
     });
+  });
 
-    const statica = similaritaStatica(obj1, obj2);
+  return { num, den };
+}
 
-    if (pesoMax === 0) return 0;
-    return ((sim + bonus) / pesoMax) * 100 + statica;
+/** Hard rule: deve coincidere almeno uno tra precise_taxon / genus / Family */
+function passesHardRule(p1, p2) {
+  const A = tokensFrom(p1.precise_taxon);
+  const B = tokensFrom(p1.genus);
+  const C = tokensFrom(p1.Family);
+
+  const A2 = tokensFrom(p2.precise_taxon);
+  const B2 = tokensFrom(p2.genus);
+  const C2 = tokensFrom(p2.Family);
+
+  const interA = A.some(v => A2.includes(v));
+  const interB = B.some(v => B2.includes(v));
+  const interC = C.some(v => C2.includes(v));
+
+  return interA || interB || interC;
+}
+
+/** Similarità complessiva con bonus TRIPLA */
+function similarity(sampleA, sampleB, attrs, tokenWeights) {
+  const p1 = sampleA.properties || {};
+  const p2 = sampleB.properties || {};
+
+  if (!passesHardRule(p1, p2)) return 0;
+
+  const { num, den } = weightedJaccardNumDen(p1, p2, attrs, tokenWeights);
+  if (den === 0) return 0;
+
+  // Bonus tripla (Family, genus, s_type)
+  let bonus = 0;
+  const A1 = tokensFrom(p1[TRIPLE_ATTRS[0]]);
+  const B1 = tokensFrom(p1[TRIPLE_ATTRS[1]]);
+  const C1 = tokensFrom(p1[TRIPLE_ATTRS[2]]);
+  const A2 = tokensFrom(p2[TRIPLE_ATTRS[0]]);
+  const B2 = tokensFrom(p2[TRIPLE_ATTRS[1]]);
+  const C2 = tokensFrom(p2[TRIPLE_ATTRS[2]]);
+
+  if (A1.length && B1.length && C1.length && A2.length && B2.length && C2.length) {
+    A1.forEach(a => B1.forEach(b => C1.forEach(c => {
+      if (A2.includes(a) && B2.includes(b) && C2.includes(c)) {
+        const key = `${a}::${b}::${c}`;
+        bonus += 1 / Math.sqrt((contaTriple[key] || 1));
+      }
+    })));
   }
 
-  return oggettiTotali.map(target => {
+  const final = ((num + bonus) / den) * 100;
+  return Math.max(0, Math.min(100, final));
+}
+
+/** Public API: affinità con tutti */
+export function calcolaAffinitaOggettiSingolo(sampleBase, featuresAll) {
+  const ATTRS = Object.keys(DEFAULT_WEIGHTS);
+
+  // Frequenze
+  contaValori = buildFrequencies(featuresAll, ATTRS);
+  contaTriple = buildTripleFrequencies(featuresAll);
+  const tokenWeights = buildTokenWeights(contaValori);
+
+  return featuresAll.map(target => {
+    const perc = similarity(sampleBase, target, ATTRS, tokenWeights);
     return {
-      fid: target.properties.fid,
-      sigla: target.properties.sigla,
-      percentuale: similarita(oggettoBase, target).toFixed(2) + "%"
+      fid: target.properties?.fid,
+      label: target.properties?.sample_number || target.properties?.id || target.properties?.fid,
+      percentuale: `${perc.toFixed(2)}%`
     };
   });
 }
 
-export function calcolaBreakdown(obj1, obj2) {
-  const attributiOggetto = Object.keys(userWeights);
-
+/** Breakdown per radar + TRIPLA */
+export function calcolaBreakdown(sampleA, sampleB) {
+  const ATTRS = Object.keys(DEFAULT_WEIGHTS);
   const breakdown = [];
 
-  // Similarità per attributo singolo
-  attributiOggetto.forEach(attr => {
-    const val1 = obj1.properties[attr];
-    const val2 = obj2.properties[attr];
-    if (!val1 || !val2) return;
+  // Frequenze locali per coerenza (solo sui due sample)
+  const localCounts = buildFrequencies([sampleA, sampleB], ATTRS);
+  const tokenWeights = buildTokenWeights(localCounts);
 
-    const arr1 = val1.split(",").map(v => v.trim());
-    const arr2 = val2.split(",").map(v => v.trim());
+  ATTRS.forEach(attr => {
+    const a1 = tokensFrom(sampleA.properties?.[attr]);
+    const a2 = tokensFrom(sampleB.properties?.[attr]);
+    if (!a1.length && !a2.length) return;
 
-    const comuni = arr1.filter(v => arr2.includes(v));
-    const unione = [...new Set([...arr1, ...arr2])];
+    const set1 = new Set(a1);
+    const set2 = new Set(a2);
+    const union = new Set([...set1, ...set2]);
 
-    let simAttr = 0;
-    let pesoAttr = 0;
-
-    unione.forEach(val => {
+    let num = 0, den = 0;
+    union.forEach(val => {
       const key = `${attr}::${val}`;
-      const pesoVal = 1 / Math.sqrt((contaValori[key] || 1));
-      pesoAttr += pesoVal;
-      if (comuni.includes(val)) simAttr += pesoVal;
+      den += tokenWeights[key] || (DEFAULT_WEIGHTS[attr] ?? 1);
+      if (set1.has(val) && set2.has(val)) {
+        num += tokenWeights[key] || (DEFAULT_WEIGHTS[attr] ?? 1);
+      }
     });
 
-    if (pesoAttr > 0) {
+    if (den > 0) {
       breakdown.push({
         attr,
-        val: comuni.join(", ") || "(nessuna corrispondenza)",
-        sim: simAttr / pesoAttr,
-        peso: userWeights[attr]
+        val: [...set1].filter(v => set2.has(v)).join(", ") || "(nessuna corrispondenza)",
+        sim: num / den,
+        peso: userWeights[attr] ?? 1
       });
     }
   });
 
-  // Bonus tripla
-  const triple1 = userTriple.map(attr =>
-    (obj1.properties[attr] || "").split(",").map(s => s.trim()).filter(Boolean)
-  );
-  const triple2 = userTriple.map(attr =>
-    (obj2.properties[attr] || "").split(",").map(s => s.trim()).filter(Boolean)
-  );
+  // TRIPLA
+  const A1 = tokensFrom(sampleA.properties?.[TRIPLE_ATTRS[0]]);
+  const B1 = tokensFrom(sampleA.properties?.[TRIPLE_ATTRS[1]]);
+  const C1 = tokensFrom(sampleA.properties?.[TRIPLE_ATTRS[2]]);
+  const A2 = tokensFrom(sampleB.properties?.[TRIPLE_ATTRS[0]]);
+  const B2 = tokensFrom(sampleB.properties?.[TRIPLE_ATTRS[1]]);
+  const C2 = tokensFrom(sampleB.properties?.[TRIPLE_ATTRS[2]]);
 
-  let bonus = 0;
   let tripleVal = [];
+  let triplePeso = 0;
 
-  triple1[0].forEach(v1 => {
-    triple1[1].forEach(v2 => {
-      triple1[2].forEach(v3 => {
-        const key = `${v1}::${v2}::${v3}`;
-        if (
-          triple2[0].includes(v1) &&
-          triple2[1].includes(v2) &&
-          triple2[2].includes(v3)
-        ) {
-          bonus += 1 / Math.sqrt((contaTriple[key] || 1));
-          tripleVal.push(key);
-        }
-      });
-    });
-  });
+  if (A1.length && B1.length && C1.length && A2.length && B2.length && C2.length) {
+    A1.forEach(a => B1.forEach(b => C1.forEach(c => {
+      if (A2.includes(a) && B2.includes(b) && C2.includes(c)) {
+        const key = `${a}::${b}::${c}`;
+        tripleVal.push(key);
+        triplePeso += 1 / Math.sqrt((contaTriple[key] || 1));
+      }
+    })));
+  }
 
-  if (bonus > 0) {
+  if (tripleVal.length) {
     breakdown.push({
-      attr: "TRIPLA",
+      attr: "TRIPLA (Family, genus, s_type)",
       val: tripleVal.join(" / "),
-      sim: 1.0,
-      peso: bonus
+      sim: 1.0,           // match pieno sulla tripla
+      peso: triplePeso
     });
   }
 

@@ -1,172 +1,255 @@
-/* popup_tombe.css */
+/* ===============================
+   POPUP – Context (taxa)
+   =============================== */
+
 .popup-tomba-wrapper {
-    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    color: #333;
-    padding: 20px;
-    min-width: 280px;
-    max-width: 350px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+  padding: 20px;
+  min-width: 420px;
+  max-width: 720px;              /* ← più largo */
+  background: #fff;
+  border-radius: 14px;           /* leggermente più “soft” */
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+/* Allow wider popups for context charts */
+.leaflet-popup-content-wrapper { max-width: 980px !important; }
 
 .popup-tomba-title {
-    font-size: 1.4rem;
-    margin-bottom: 15px;
-    font-weight: 600;
-    color: #4a3a7a;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(126, 87, 194, 0.25);
-    text-align: center;
+  font-size: 1.45rem;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #4a3a7a;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(126, 87, 194, 0.25);
+  text-align: center;
 }
 
+/* --- Summary numbers (samples, taxa, Σqt) --- */
+
 .popup-tomba-info {
-    font-size: 1rem;
-    margin: 15px 0;
-    color: #555;
+  font-size: 1rem;
+  margin: 10px 0 6px;
+  color: #555;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 8px;
 }
 
 .popup-tomba-info .info-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  background: #fafafa;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 6px 8px;
+  border-radius: 8px;
 }
 
-.popup-tomba-info .info-label {
-    font-weight: 500;
-    color: #666;
+.popup-tomba-info .info-label { font-weight: 500; color: #666; }
+.popup-tomba-info .info-value { font-weight: 700; color: #7e57c2; }
+
+/* --- View switcher (Bar / Donut / Info) --- */
+
+.tomb-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
-.popup-tomba-info .info-value {
-    font-weight: 600;
-    color: #7e57c2;
+.ts-btn {
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
 }
+.ts-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.ts-btn.active { background: #e8f0fe; border-color: #1a73e8; color: #1a73e8; }
+
+.scale-badge {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #666;
+}
+
+/* --- Toolbar locale s_type --- */
+.stype-local-toolbar{
+  display:flex; gap:10px; align-items:center; margin: 2px 0 6px;
+}
+.stype-local-btn{
+  width:34px; height:34px; border-radius:50%;
+  border:2px solid #94a3b8; background:#fff; padding:3px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.stype-local-btn img{ width:22px; height:22px; object-fit:contain; }
+.stype-local-btn.active{ border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.22); }
+
+/* --- mini legend (anteprima top-6) --- */
+.mini-legend-host{ margin: 4px 0 2px; }
+.mini-legend{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap:6px;
+}
+.mini-legend-item{
+  display:flex; align-items:center; gap:6px;
+  border:1px solid rgba(0,0,0,.06); background:#fff;
+  padding:4px 6px; border-radius:8px; min-width:0;
+}
+.mini-legend-item img{ width:16px; height:16px; object-fit:contain; }
+.mini-legend-item span{
+  font-size:12px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* --- Chart area --- */
 
 .popup-tomba-canvas-container {
-    position: relative;
-    width: 100%;
-    height: 300px;
-    margin-top: 20px;
+  position: relative;
+  width: 100%;
+  height: 340px; 
+  margin-top: 8px;
+}
+.popup-tomba-canvas { display:block; width:100% !important; height:100% !important; }
+.chartjs-render-monitor { transition:none !important; }
+
+/* --- Info tab (grid rows) --- */
+
+.tomb-info-box { max-height: 360px; overflow: auto; padding: 6px 2px 2px 2px; }
+
+.tomb-info-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(0,0,0,0.07);
+}
+.tomb-info-row:last-child { border-bottom: none; }
+.tomb-info-k { color: #4a3a7a; font-weight: 700; letter-spacing: .2px; }
+.tomb-info-v { color: #333; }
+.tomb-info-doc { margin-top: 10px; font-size: 13px; }
+.tomb-info-doc a { color: #1a73e8; text-decoration: none; }
+.tomb-info-doc a:hover { text-decoration: underline; }
+
+/* References list */
+.refs-list{ margin:0; padding-left:18px; }
+.refs-list li{ margin:2px 0; }
+
+/* --- Legend (collapsible) --- */
+
+.legend-collapsible {
+  margin-top: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px;
+  background: #fafafa;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.legend-collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #555;
+  font-weight: 600;
+}
+.legend-collapsible[open] > summary { border-bottom: 1px dashed rgba(0,0,0,0.08); }
+.legend-collapsible > summary::-webkit-details-marker { display: none; }
+.legend-body {
+  padding: 8px 8px 6px;
+  max-height: 240px;       /* ← nuovo */
+  overflow: auto;          /* ← nuovo */
 }
 
-.popup-tomba-canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-}
+/* --- Legend items with icons --- */
 
-/* Stili per il grafico */
-.chartjs-render-monitor {
-    transition: none !important;
+.donut-legend {
+  display: flex; flex-wrap: wrap;
+  gap: 6px 10px; margin-top: 8px; justify-content: flex-start;
 }
+.donut-legend-item {
+  display:flex; align-items:center; gap:8px;
+  padding: 4px 8px;
+  border:1px solid rgba(0,0,0,0.06);
+  border-radius: 8px; background:#fff; cursor:pointer;
+  transition: all .15s ease;
+}
+.donut-legend-item:hover { box-shadow:0 2px 8px rgba(0,0,0,.06); transform: translateY(-1px); }
+.donut-legend-item.disabled { opacity:.5; }
+.donut-legend-swatch {
+  width: 18px; height: 18px; border-radius:50%; border: 2px solid var(--legend-color, #ccc);
+  display:flex; align-items:center; justify-content:center; overflow:hidden; background:#fff;
+}
+.donut-legend-swatch img { width:14px; height:14px; object-fit:contain; display:block; }
+.donut-legend-label { font-size: 12px; color: #333; }
+.legend-body .donut-legend { justify-content:flex-start; }
+.legend-body .donut-legend-item { padding: 2px 6px; }
 
-/* Switcher */
-.tomb-switcher{
-    display:flex; align-items:center; gap:8px; margin-top:6px; margin-bottom:8px;
-  }
-  .ts-btn{
-    border:1px solid rgba(0,0,0,0.1);
-    background:#fff;
-    color:#333;
-    font-size:13px;
-    padding:6px 10px;
-    border-radius:8px;
-    cursor:pointer;
-    transition:all .15s ease;
-  }
-  .ts-btn:hover{ transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,.08); }
-  .ts-btn.active{ background:#e8f0fe; border-color:#1a73e8; color:#1a73e8; }
-  
-  .scale-badge{
-    margin-left:auto;
-    font-size:11px;
-    padding:3px 6px;
-    border-radius:6px;
-    background:#f5f5f5;
-    border:1px solid #e0e0e0;
-    color:#666;
-  }
-  
-  /* Info tomba */
-  .tomb-info-box{
-    max-height: 320px;
-    overflow:auto;
-    padding: 6px 2px 2px 2px;
-  }
-  .tomb-info-row{
-    display:grid;
-    grid-template-columns: 120px 1fr;
-    gap:8px;
-    font-size: 13px;
-    padding:6px 0;
-    border-bottom: 1px dashed rgba(0,0,0,0.07);
-  }
-  .tomb-info-row:last-child{ border-bottom: none; }
-  .tomb-info-k{
-    color:#4a3a7a; font-weight:700; letter-spacing:.2px;
-  }
-  .tomb-info-v{ color:#333; }
-  .tomb-info-doc{ margin-top:10px; font-size:13px; }
-  .tomb-info-doc a{ color:#1a73e8; text-decoration:none; }
-  .tomb-info-doc a:hover{ text-decoration:underline; }
-  
-  /* Legend (collassabile) */
-  .legend-collapsible{
-    margin-top: 10px;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px;
-    background: #fafafa;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  }
-  .legend-collapsible > summary{
-    cursor: pointer;
-    list-style: none;
-    padding: 6px 10px;
-    font-size: 12px;
-    color: #555;
-    font-weight: 600;
-  }
-  .legend-collapsible[open] > summary{
-    border-bottom: 1px dashed rgba(0,0,0,0.08);
-  }
-  .legend-collapsible > summary::-webkit-details-marker{ display:none; }
-  .legend-body{ padding: 8px 8px 6px; }
-  
-  /* Legend (icone + etichette) */
-  .donut-legend{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px 10px;
-    margin-top:8px;
-    justify-content:flex-start;
-  }
-  .donut-legend-item{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:4px 8px;
-    border:1px solid rgba(0,0,0,0.06);
-    border-radius:8px;
-    background:#fff;
-    cursor:pointer;
-    transition:all .15s ease;
-  }
-  .donut-legend-item:hover{ box-shadow:0 2px 8px rgba(0,0,0,.06); transform:translateY(-1px); }
-  .donut-legend-item.disabled{ opacity:.5; }
-  
-  .donut-legend-swatch{
-    width:18px; height:18px; border-radius:50%;
-    border:2px solid var(--legend-color, #ccc);
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden; background:#fff;
-  }
-  .donut-legend-swatch img{
-    width:14px; height:14px; object-fit:contain; display:block;
-  }
-  .donut-legend-label{ font-size:12px; color:#333; }
-  
-  /* (Facoltativo) tuning del contenitore legenda nel blocco collassabile */
-  .legend-body .donut-legend{ justify-content:flex-start; }
-  .legend-body .donut-legend-item{ padding:2px 6px; }
-  
+/* --- Taxa list (entity mode) --- */
+.taxa-list { margin-top: 10px; }
+.taxa-list ul {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 260px; overflow: auto;
+}
+.taxa-list li {
+  display: grid; grid-template-columns: 24px 1fr auto; align-items: center;
+  gap: 8px; padding: 6px 8px;
+  border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; background: #fff;
+}
+.tli-icon { width: 24px; height: 24px; border-radius:50%; overflow:hidden;
+  border:1px solid rgba(34,197,94,0.45); display:flex; align-items:center; justify-content:center; }
+.tli-icon img { width:100%; height:100%; object-fit:cover; display:block; }
+.tli-label { font-size: 13px; color: #111827; }
+.tli-entity { font-size: 12px; color: #6b7280; }
+
+/* Lista per s_type (due sezioni) */
+.taxa-list-byst { margin-top: 10px; display: grid; gap: 8px; }
+.tl-section { border:1px solid rgba(0,0,0,.06); border-radius:10px; background:#fafafa; padding: 4px 6px; }
+.tl-section > summary { cursor:pointer; list-style:none; padding:4px 6px; font-weight:600; color:#374151; }
+.tl-section > summary::-webkit-details-marker{ display:none; }
+.tl-chip{ display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; border:1px solid rgba(79,70,229,.25); font-size:12px; }
+.tl-count{ margin-left:6px; font-size:12px; color:#6b7280; }
+
+/* --- Geometry mini preview --- */
+.ctx-geom-box {
+  margin-top: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 6px;
+  background: #fff;
+}
+.ctx-geom-svg { display:block; width:100%; height:auto; border-radius: 8px; }
+
+/* ===== BUBBLES (riusabili) ===== */
+.bubble-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+}
+.bubble{
+  display:inline-block;
+  padding:3px 8px;
+  border:1px solid rgba(0,0,0,0.12);
+  border-radius:999px;
+  background:#f9fafb;
+  font-size:11px;
+  color:#374151;
+  white-space:nowrap;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tomb-info-v .bubble-wrap{ justify-content:flex-start; }

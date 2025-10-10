@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Explore & Download</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="download_page.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+
+<!-- Right filters sidebar -->
+<aside id="rightFilters" class="rf">
+  <!-- TAXA (samples) -->
+  <section class="rf-block">
+    <div class="rf-head">
+      <h3>Taxa (samples)</h3>
+      <small class="muted">filtra per <code>precise_taxon</code></small>
+    </div>
+    <!-- mount point per il widget taxa -->
+    <div id="taxaFilterMount"></div>
+  </section>
+
+  <!-- TYPOLOGY -->
+  <section class="rf-block">
+    <div class="rf-head">
+      <h3>Typology</h3>
+      <div class="rf-ops">
+        <button id="typSelAll" class="rf-op">All</button>
+        <button id="typClear" class="rf-op">Clear</button>
+      </div>
+    </div>
+    <div id="typologyChips" class="rf-chips"></div>
+  </section>
+
+  <!-- PERIOD -->
+  <section class="rf-block">
+    <div class="rf-head">
+      <h3>Period</h3>
+      <div class="rf-ops">
+        <button id="perSelAll" class="rf-op">All</button>
+        <button id="perClear" class="rf-op">Clear</button>
+      </div>
+    </div>
+    <div id="periodChips" class="rf-chips"></div>
+  </section>
+</aside>
+
+<body>
+  <header class="dl-header">
+    <div class="brand">
+      <a class="home-link" id="homeLink" aria-label="Back to map">
+        <img id="homeLogo" alt="Back" />
+      </a>
+      <h1>Explore & Download</h1>
+    </div>
+  </header>
+
+  <main class="dl-main">
+
+    <!-- riga: dataset + area side-by-side -->
+    <section class="block two-col">
+      <!-- col 1: choose dataset -->
+      <div>
+        <h2 class="block-title">1) Choose dataset</h2>
+        <div class="dataset-chooser" id="datasetChooser" role="group" aria-label="Dataset">
+          <button class="ds-btn" data-ds="sites" aria-pressed="true">sites</button>
+          <button class="ds-btn" data-ds="contexts" aria-pressed="false">contexts</button>
+          <button class="ds-btn" data-ds="samples" aria-pressed="false">samples</button>
+        </div>
+        <p class="muted small">I dati vengono letti direttamente dai file GeoJSON.</p>
+      </div>
+
+      <!-- col 2: filter by area (Regions sopra, Province sotto) -->
+      <div>
+        <h2 class="block-title">2) Filter by area</h2>
+        <div class="chips-col">
+          <h3>Regions</h3>
+          <div class="chips" id="regionChips"></div>
+          <div class="chips-ops">
+            <button class="chip-op" id="regionsSelectAll">Select all</button>
+            <button class="chip-op" id="regionsClear">Clear</button>
+          </div>
+        </div>
+        <div class="chips-col" style="margin-top:.75rem">
+          <h3>Provinces</h3>
+          <div class="chips" id="provinceChips"></div>
+          <div class="chips-ops">
+            <button class="chip-op" id="provincesSelectAll">Select all</button>
+            <button class="chip-op" id="provincesClear">Clear</button>
+          </div>
+        </div>
+        <p class="muted small">
+          Per <em>samples</em> i filtri area derivano dai <em>contexts</em> via <code>samples.context_id = contesti.fid</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- step 3: campi -->
+    <section class="block">
+      <h2 class="block-title">3) Select fields</h2>
+      <div id="fieldsBar" class="fields-bar"></div>
+    </section>
+
+    <!-- datatable + azioni -->
+    <section class="block">
+      <div class="table-head">
+        <h2 class="block-title">Preview</h2>
+        <div class="table-actions">
+          <label class="rows-label">
+            Rows/page
+            <select id="rowsPerPage">
+              <option>5</option>
+              <option>10</option>
+              <option selected>25</option>
+              <option>50</option>
+              <option>100</option>
+            </select>
+          </label>
+          <input id="tableSearch" class="search-input" type="search" placeholder="Search…"/>
+          <button id="downloadCsvBtn" class="download-btn" type="button">CSV</button>
+          <button id="downloadGeoBtn" class="download-btn outline" type="button">GeoJSON (WGS84)</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+        <div id="noResults" class="no-results" aria-live="polite" hidden>Seleziona almeno una Regione o Provincia per vedere i dati.</div>
+      </div>
+
+      <div class="pager">
+        <button id="prevPage" class="pg-btn" disabled>‹ Prev</button>
+        <span id="pageInfo" class="page-info">Page 1/1</span>
+        <button id="nextPage" class="pg-btn" disabled>Next ›</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="dl-footer">
+    <span class="muted">Path utils attivi • percorsi risolti via <code>getPath()</code></span>
+  </footer>
+
+  <script type="module" src="../path_utils.js"></script>
+  <script type="module" src="download_page.js"></script>
+</body>
+</html>
