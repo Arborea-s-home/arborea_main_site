@@ -36,10 +36,12 @@ export class ChartManager {
     const canvas = document.createElement('canvas');
     container.appendChild(canvas);
 
+    // Etichette leggibili (es. "funerary", "sacred", ecc.)
     const labels = fieldsData.map(item =>
       window.labelMap?.[item.field] || item.field
     );
 
+    // Percentuale rispetto alla media pesata (100% = media)
     const percentages = fieldsData.map(item => {
       const avg = item.averageValue;
       const val = item.currentValue;
@@ -47,21 +49,58 @@ export class ChartManager {
       return Math.round((val / avg) * 100);
     });
 
-    const getGradient = (ctx, chartArea, value) => {
-      const ratio = value / 100;
-      const gradient = ctx.createLinearGradient(0, 0, chartArea.right, 0);
+    // Assicuriamoci che l'asse X includa SEMPRE 100, così la linea verde cade dentro al grafico
+    const maxPerc = Math.max(100, ...percentages);
 
-      if (ratio < 0.5) {
-        gradient.addColorStop(0, 'rgba(0, 180, 0, 0.7)');
-        gradient.addColorStop(1, 'rgba(255, 255, 0, 0.7)');
-      } else if (ratio < 1) {
-        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.7)');
-        gradient.addColorStop(1, 'rgba(255, 165, 0, 0.7)');
+    // Colore della barra in funzione di quanto sta sopra/sotto la media:
+    // <100%  => rosso -> arancio/giallo
+    // ~100%  => arancio/giallo pieno
+    // >100%  => arancio/giallo -> verde
+    const getGradient = (ctx, chartArea, value) => {
+      if (!chartArea) return 'rgba(150,150,150,0.5)';
+
+      const gradient = ctx.createLinearGradient(0, 0, chartArea.right, 0);
+      const pct = value; // già in percento
+
+      if (pct < 100) {
+        // sotto media: rosso → arancio/giallo
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.7)');   // rosso (#ef4444)
+        gradient.addColorStop(1, 'rgba(251, 191, 36, 0.7)');  // giallo/arancio (#fbbf24)
+      } else if (pct === 100) {
+        // esattamente nella media: arancio/giallo
+        gradient.addColorStop(0, 'rgba(251, 191, 36, 0.7)');
+        gradient.addColorStop(1, 'rgba(251, 191, 36, 0.7)');
       } else {
-        gradient.addColorStop(0, 'rgba(255, 165, 0, 0.7)');
-        gradient.addColorStop(1, 'rgba(255, 0, 0, 0.7)');
+        // sopra media: arancio/giallo → verde
+        gradient.addColorStop(0, 'rgba(251, 191, 36, 0.7)');  // giallo/arancio
+        gradient.addColorStop(1, 'rgba(34, 197, 94, 0.7)');   // verde (#22c55e)
       }
       return gradient;
+    };
+
+    // Plugin linea verticale tratteggiata a 100%
+    const avgRefLinePlugin = {
+      id: 'avgRefLine',
+      afterDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales?.x) return;
+
+        const xScale = scales.x;
+        const xPixel = xScale.getPixelForValue(100); // posizione del 100%
+
+        // Se per qualche motivo è fuori, non disegnare
+        if (xPixel < chartArea.left || xPixel > chartArea.right) return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(xPixel, chartArea.top);
+        ctx.lineTo(xPixel, chartArea.bottom);
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.9)'; // verde brillante
+        ctx.stroke();
+        ctx.restore();
+      }
     };
 
     new Chart(canvas, {
@@ -74,7 +113,6 @@ export class ChartManager {
           backgroundColor: (context) => {
             const chart = context.chart;
             const { ctx, chartArea } = chart;
-            if (!chartArea) return 'rgba(150,150,150,0.5)';
             return getGradient(ctx, chartArea, context.raw);
           },
           borderColor: 'rgba(0,0,0,0.8)',
@@ -89,6 +127,7 @@ export class ChartManager {
         scales: { 
           x: {
             beginAtZero: true,
+            suggestedMax: maxPerc, // <-- così la linea del 100% è sempre visibile
             title: {
               display: true,
               text: '% of the weighted avg'
@@ -109,10 +148,14 @@ export class ChartManager {
           legend: { display: false },
           tooltip: {
             callbacks: {
+              // tooltip personalizzato
               label: (ctx) => {
                 const data = fieldsData[ctx.dataIndex];
                 const code = window.labelMap?.[data.field] || data.field;
-                const ratio = data.averageValue === 0 ? 0 : (data.currentValue / data.averageValue);
+                const ratio = data.averageValue === 0
+                  ? 0
+                  : (data.currentValue / data.averageValue);
+
                 return [
                   `${code} – ${data.field}`,
                   `Value: ${data.currentValue.toFixed(2)}`,
@@ -123,7 +166,8 @@ export class ChartManager {
             }
           }
         }
-      }
+      },
+      plugins: [avgRefLinePlugin] // <-- linea verticale a 100%
     });
   }
 }

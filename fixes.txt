@@ -1,0 +1,61 @@
+samples:
+
+bibliografia X
+contesto associato valido X
+taxon_id associato valido X
+
+contesti:
+
+bibliografia X
+cronologia X
+sito associato valido X
+geometrie X
+cronologia --> date assolute
+geometrie precise (provincia di Roma)
+
+siti:
+
+bibliografia X
+geometrie X
+
+---- problema sito web ----
+
+- fatto ✅
+
+pulsante per visualizzare tutti i contesti  --> ✅ inserito nella sidebar della hompage tasto "see all records" sotto il toggle "lista-grafico"
+codice BRAIN esplicitato nel pop-up del sito --> ✅
+corsivo per i taxa (ecc. patronimici, subsp. etc)--> ✅ (per il momento inserito nel pop-up samples e nel grafico "samples")
+inserire id del nostro record --> ✅ pop-up sample ora mostra in alto a destra il nostro ID (NB: quello da inserire nche in ACCESS archeologi)
+termine "reliability" (pop-up oggettti) = cambiare termine ✅ (cambiato in "placement accuracy")
+migliorare visibilità su mappa --> ✅ (ora icone raggruppate per taxon, pop-up adattato per "smistare")
+stesso biblography in tutti i pop-up --> ✅
+grafico "samples (10)" nella pagina dettaglio da rendere più leggibile--> ✅ (ora vicino al grafico compaiono le icone), in basso i nomi dei taxa, il mouse hoover mostra il n. totale
+pop-up siti (homepage), migliorare graficamente --> ✅ invertito gradiente rosso-verde, inserita una linea per segnalare la media (100%), l'intestazione informa l'utente su come leggere il grafico
+
+- parzialmente fatto ⏳
+
+finire loghi per la mappa --> ⏳ (aggiunto nuovo stock, ma ancora non completo)
+pop-up siti, fix alla sezione contesti (bottone "indietro" non funge) --> ⏳ (non riesco a risolvere il problema definitivamente, devo capire dove si trova il bug)
+
+
+- da fare ❌
+
+rendere ricercabili i taxa anche per nomi desueti --> ❌
+eliminare il box di "affinità" dalla scheda dettaglio  --> ❌
+aggiornamento nomi file/URL --> ❌
+inserire obbligo di download bibliografia --> ❌ (da capire se vogliamo mantenere tale sezione)
+
+aggiornare in inglese homepage --> ❌
+aggiornare in inglese pagina dettaglio --> ❌
+aggiornare in inglese pagina dettaglio_siti --> ❌
+aggiornare in inglese dettaglio occourence --> ❌
+aggiornare in inglese sezione download --> ❌
+
+--- problemi db ----
+
+(NB: tutti i problemi ⏳ non compaiono ancora sul sito definitivo, mentre ✅ sono aggiornati correttamente)
+
+risoluzione altri problemi (siti senza cronologia, taxa senza contesto etc) --> ✅
+taxa --> sostituzione subspecie con specie (ecc. cereali), assegnare subspecie --> ⏳
+recupero delle geometrie del Lazio --> ⏳ (20/84)
+aggiornare bibliography inserendo solo autore + anno (con link a Brain?) invece di menzione estesa--> ❌ (work in progress)

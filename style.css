@@ -1116,3 +1116,34 @@ html {
 .field-wrapper + .field-wrapper .toggle-label {
   margin-top: 2px;
 }
+
+.see-all-records-btn {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  padding: .6rem .8rem;
+  border: 0;
+  border-radius: 10px;
+
+  background: #2563eb;      /* blu coerente con gli switch analitici */
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgb(0 0 0 / .15);
+}
+
+.see-all-records-btn:hover {
+  background: #1e40af;
+}
+
+.chart-caption {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;           /* grigio neutro leggibile */
+  font-style: italic;
+  margin-bottom: 6px;
+}
+

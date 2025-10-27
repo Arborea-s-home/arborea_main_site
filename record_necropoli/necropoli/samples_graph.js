@@ -54,6 +54,33 @@ function escapeHtml(str){
 }
 
 /**
+ * Corsivo intelligente stile botanico:
+ * Tutti i token separati da spazi vanno in <em>, tranne quelli che contengono un punto.
+ * Esempi:
+ *  "Galium aparine L." =>
+ *    <em>Galium</em> <em>aparine</em> <span class="no-italic">L.</span>
+ *  "Stellaria media (L.) Vill." =>
+ *    <em>Stellaria</em> <em>media</em> <span class="no-italic">(L.)</span> <span class="no-italic">Vill.</span>
+ *  "Silene sp." =>
+ *    <em>Silene</em> <span class="no-italic">sp.</span>
+ */
+
+function smartItalics(str) {
+  const raw = String(str || '').trim();
+  if (!raw) return '';
+  const parts = raw.split(/\s+/);
+  const rendered = parts.map(tok => {
+    if (tok.includes('.')) {
+      return `<span class="no-italic">${escapeHtml(tok)}</span>`;
+    } else {
+      return `<em>${escapeHtml(tok)}</em>`;
+    }
+  });
+  return rendered.join(' ');
+}
+
+
+/**
  * Wrappa il testo alla prima “separazione” utile (spazio, /, -)
  * dopo la soglia `limit`. Include / o - nella riga precedente.
  * Se non trova separatori, fa hard-wrap a `limit`.
@@ -163,16 +190,16 @@ export function renderSamplesGraph() {
   const container = document.getElementById('samples-chart-container');
   if (!canvas || !container) return;
 
-  // ➜ Chip label: se SPECIES, taglia tutto prima di "subsp"
+  // chipBase: (per species togli la parte prima di 'subsp', come già facevi)
   const chipBase = (effectiveMode === 'species')
     ? labelsRaw.map(chipLabelForSpecies)
     : labelsRaw.slice();
 
-  // etichette multi-line per l’asse Y (wrap dopo 15)
+  // etichette multi-line (ancora usate per calcolare l'altezza del container e per Chart come "labels")
   const labelsDisplay = chipBase.map(l => wrapAtBoundary(l, 15));
   const maxLines = labelsDisplay.reduce((m, a) => Math.max(m, a.length), 1);
 
-  // altezza dinamica del container
+  // Altezza dinamica del canvas in base al numero di righe ed eventuale wrap
   const rows = Math.max(1, labelsRaw.length);
   const baseRowH = 30;
   const extraPerLine = 9;
@@ -180,19 +207,45 @@ export function renderSamplesGraph() {
   const H = Math.max(200, rowH * rows + 70);
   container.style.height = `${H}px`;
 
-  // padding sinistro dinamico in base alla larghezza massima della “bubble”
-  const maxTextW = Math.max(...labelsDisplay.map(lines => measureMaxLineWidth(lines)), 0);
-  const CHIP_PADX = 8, CHIP_BORDER = 2, CHIP_GAP = 8;
-  const leftPad = Math.ceil(CHIP_BORDER + CHIP_PADX * 2 + maxTextW + CHIP_GAP);
+  // --- NUOVO: prepariamo le icone da mostrare a sinistra della barra
+  // prendo l'icona di family (image_1) o di precise_taxon (image_2)
+  const iconsInfo = labelsRaw.map(label => {
+    let src = '';
+    if (effectiveMode === 'family') {
+      if (FAMILY_ICON?.[label]) {
+        src = getPath(`images/objects/${FAMILY_ICON[label]}`);
+      }
+    } else {
+      const img2 = TAXON_ICON?.[label] || '';
+      if (img2) src = getPath(`images/objects/${img2}`);
+    }
+
+    if (src) {
+      const imgEl = new Image();
+      imgEl.src = src;
+      return { img: imgEl };
+    } else {
+      // nessuna icona → disegniamo solo il cerchio vuoto col bordo colorato
+      return { img: null };
+    }
+  });
+
+  // padding sinistro: ora basta lo spazio per il cerchio icona + gap
+  const ICON_SIZE = 28; // diametro della pallina icona nel grafico
+  const GAP = 8;        // spazio tra pallina e inizio asse X
+  const leftPad = ICON_SIZE + GAP + 6;
 
   const colors = labelsRaw.map((_, i) => PALETTE[i % PALETTE.length]);
+
   const cfg = makeConfig({
     labelsDisplay,
-    labelsRaw,
     data,
     colors,
     leftPad,
-    isSpecies: (effectiveMode === 'species')  // ➜ barre più larghe solo per species
+    isSpecies: (effectiveMode === 'species'),
+    iconsInfo,
+    iconSize: ICON_SIZE,
+    gap: GAP
   });
 
   if (!chart) {
@@ -207,15 +260,21 @@ export function renderSamplesGraph() {
     chart.config.data.datasets[0].barThickness = (effectiveMode === 'species') ? 18 : 14;
     chart.config.data.datasets[0].categoryPercentage = (effectiveMode === 'species') ? 0.7 : 0.6;
 
+    // padding sinistro aggiornato
     chart.config.options.layout.padding.left = leftPad;
+
+    // aggiorna plugin icone
     if (chart.config.options.plugins?.yChipLabels) {
-      chart.config.options.plugins.yChipLabels.lines = labelsDisplay;
+      chart.config.options.plugins.yChipLabels.icons = iconsInfo;
       chart.config.options.plugins.yChipLabels.colors = colors;
+      chart.config.options.plugins.yChipLabels.iconSize = ICON_SIZE;
+      chart.config.options.plugins.yChipLabels.gap = GAP;
     }
+
     chart.update();
   }
 
-  // mini-legenda coerente con la modalità corrente
+  // legenda sotto: resta con testo (ora corsivo intelligente), quindi la gente capisce chi è chi
   renderMiniLegend(labelsRaw, effectiveMode);
 }
 
@@ -246,18 +305,18 @@ function buildDataset(features, mode) {
 /** ======================
  *  Chart.js setup (bar orizzontale + plugin “chip labels”)
  *  ====================== */
-function makeConfig({ labelsDisplay, labelsRaw, data, colors, leftPad, isSpecies }) {
+function makeConfig({ labelsDisplay, data, colors, leftPad, isSpecies, iconsInfo, iconSize, gap }) {
   return {
     type: 'bar',
     data: {
-      labels: labelsDisplay, // array di array → multi-line
+      labels: labelsDisplay, // rimangono come categorie interne per Chart
       datasets: [{
         data,
         backgroundColor: colors,
         borderColor: '#ffffff',
         borderWidth: 1,
         borderRadius: 6,
-        barThickness: isSpecies ? 18 : 14,   // ➜ più larga in species
+        barThickness: isSpecies ? 18 : 14,
         categoryPercentage: isSpecies ? 0.7 : 0.6,
         hoverBackgroundColor: colors.map(c => c)
       }]
@@ -272,15 +331,16 @@ function makeConfig({ labelsDisplay, labelsRaw, data, colors, leftPad, isSpecies
         tooltip: {
           displayColors: false,
           callbacks: {
-            // Solo numero, senza titolo
             title: () => '',
             label: (ctx) => String(Number(ctx.raw || 0))
           }
         },
-        // Plugin custom che disegna le “bubble” label a sinistra
+        // plugin custom: ora disegna SOLO l'icona circolare con bordo colorato
         yChipLabels: {
-          lines: labelsDisplay,
-          colors
+          icons: iconsInfo,
+          colors,
+          iconSize,
+          gap
         }
       },
       scales: {
@@ -296,7 +356,7 @@ function makeConfig({ labelsDisplay, labelsRaw, data, colors, leftPad, isSpecies
         },
         y: {
           grid: { display: false, drawBorder: false },
-          ticks: { display: false } // etichette disegnate dal plugin come chip
+          ticks: { display: false } // niente testo: lo sostituiamo con le icone
         }
       },
       animation: { duration: 180 }
@@ -314,63 +374,63 @@ function yChipLabelsPlugin() {
       const meta = chart.getDatasetMeta(0);
       if (!meta || !meta.data) return;
 
-      const linesArr = opts.lines || [];
+      const iconsArr = opts.icons || [];
       const colors   = opts.colors || [];
-      const gap = 8;             // spazio fra chip e area barre
-      const padX = 8, padY = 4;  // padding interno chip
-      const r   = 10;            // raggio arrotondamento
-      const lineH = CHIP_LINE_H;
+      const size     = opts.iconSize || 28; // diametro pallina
+      const gap      = opts.gap || 8;       // spazio fra pallina e asse x
 
       ctx.save();
-      ctx.font = CHIP_FONT;
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
 
       for (let i = 0; i < meta.data.length; i++) {
         const elem = meta.data[i];
         if (!elem) continue;
-        const cy = elem.y;   // centro barra
-        const lines = Array.isArray(linesArr[i]) ? linesArr[i] : [String(linesArr[i] || '')];
 
-        // dimensioni chip
-        let w = 0;
-        for (const ln of lines) w = Math.max(w, ctx.measureText(ln).width);
-        const h = padY * 2 + lineH * lines.length;
-
-        const xRight = chart.scales.x.left - gap;
-        const xLeft  = xRight - (w + padX * 2);
-        const yTop   = Math.round(cy - h / 2);
-
-        // chip (bg + bordo nel colore della barra)
+        const cy = elem.y; // centro verticale della barra
         const stroke = colors[i % colors.length] || '#999';
+
+        // calcoliamo la posizione a sinistra rispetto all'asse X
+        const xRight = chart.scales.x.left - gap;
+        const xLeft  = xRight - size;
+        const yTop   = Math.round(cy - size / 2);
+
+        const cx = xLeft + size / 2;
+        const cyCircle = yTop + size / 2;
+
+        // pallina bianca con bordo colorato
         ctx.beginPath();
-        roundRect(ctx, xLeft, yTop, w + padX * 2, h, r);
+        ctx.arc(cx, cyCircle, size / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = stroke;
         ctx.stroke();
 
-        // testo multi-riga
-        let ty = yTop + padY + lineH / 2;
-        ctx.fillStyle = '#111827';
-        for (const ln of lines) {
-          ctx.fillText(ln, xLeft + padX, ty);
-          ty += lineH;
+        // icona dentro (se disponibile)
+        const info = iconsArr[i];
+        const imgEl = info && info.img;
+        if (imgEl && imgEl.complete && imgEl.naturalWidth && imgEl.naturalHeight) {
+          const innerPad = 4;
+          const d = size - innerPad * 2;
+
+          // clip circolare per non uscire dal bordo
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cyCircle, (size / 2) - innerPad, 0, Math.PI * 2);
+          ctx.clip();
+
+          ctx.drawImage(
+            imgEl,
+            xLeft + innerPad,
+            yTop + innerPad,
+            d,
+            d
+          );
+
+          ctx.restore();
         }
       }
 
       ctx.restore();
-
-      function roundRect(c, x, y, w, h, r) {
-        const rr = Math.min(r, w/2, h/2);
-        c.moveTo(x + rr, y);
-        c.arcTo(x + w, y,     x + w, y + h, rr);
-        c.arcTo(x + w, y + h, x,     y + h, rr);
-        c.arcTo(x,     y + h, x,     y,     rr);
-        c.arcTo(x,     y,     x + w, y,     rr);
-        c.closePath();
-      }
     }
   };
 }
@@ -436,6 +496,7 @@ function renderMiniLegend(labelsRaw, legendMode) {
     img.loading = 'lazy';
     img.decoding = 'async';
 
+    // icona per questa voce, dipende dalla modalità
     let src = '';
     if (legendMode === 'family') {
       src = FAMILY_ICON?.[label] ? getPath(`images/objects/${FAMILY_ICON[label]}`) : '';
@@ -451,10 +512,13 @@ function renderMiniLegend(labelsRaw, legendMode) {
       img.style.display = 'none';
     }
 
+    // testo etichetta in legenda, con corsivo intelligente.
+    // Facciamo il wrap su 25 e poi applichiamo smartItalics riga per riga.
     const txt = document.createElement('span');
     txt.className = 'samp-leg-label';
-    const lines = wrapAtBoundary(label, 25).map(escapeHtml);
-    txt.innerHTML = lines.join('<br>');
+    const wrappedLines = wrapAtBoundary(label, 25); // array di stringhe
+    const htmlLines = wrappedLines.map(seg => smartItalics(seg)); // ogni riga ha <em> e .no-italic
+    txt.innerHTML = htmlLines.join('<br>');
 
     item.appendChild(sw);
     item.appendChild(img);

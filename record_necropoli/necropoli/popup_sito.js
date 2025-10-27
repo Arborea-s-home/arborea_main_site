@@ -189,11 +189,19 @@ function buildInfoTab(siteFeature) {
   const reliab = (p.c_appr != null) ? String(p.c_appr) : '-';
   const provReg = [p.province, p.region].filter(Boolean).join(' — ') || '-';
 
-  // Periods / Sub-periods (multi-valore separato da ';' → bubble)
+  // <-- usa site_code, che è quello reale
+  const siteCode = (p.site_code != null && p.site_code !== '')
+    ? String(p.site_code)
+    : '-';
+
+  // Periods / Sub-periods
   const periods = (p.parent_chronology_iccd || '').trim();
   const subperiods = (p.chronology_iccd || '').trim();
 
-  const geomSrc = [p.source, p.source_type].map(v => v ? String(v) : '').filter(Boolean).join(' (') + (p.source_type ? ')' : '');
+  const geomSrc = [p.source, p.source_type]
+    .map(v => v ? String(v) : '')
+    .filter(Boolean)
+    .join(' (') + (p.source_type ? ')' : '');
 
   const preview = sitePreviewSVG(siteFeature, 380, 210);
 
@@ -201,13 +209,41 @@ function buildInfoTab(siteFeature) {
     <div class="tomb-info" style="padding-top:6px;">
       ${preview ? `<div class="ctx-geom-box" style="margin-top:2px;">${preview}</div>` : ''}
       <div class="tomb-info-box tomb-info--base">
-        <div class="tomb-info-row"><div class="tomb-info-k">Site</div><div class="tomb-info-v">${escapeHtml(name)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Typology</div><div class="tomb-info-v">${escapeHtml(typology)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Reliability</div><div class="tomb-info-v">${escapeHtml(reliab)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Province / Region</div><div class="tomb-info-v">${escapeHtml(provReg)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Periods</div><div class="tomb-info-v">${renderBubbles(periods)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Sub-periods</div><div class="tomb-info-v">${renderBubbles(subperiods)}</div></div>
-        <div class="tomb-info-row"><div class="tomb-info-k">Geometry source</div><div class="tomb-info-v">${escapeHtml(geomSrc || '-')}</div></div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Site</div>
+          <div class="tomb-info-v">${escapeHtml(name)}</div>
+        </div>
+
+        <!-- nuova riga: mostra il site_code -->
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Brainplants code</div>
+          <div class="tomb-info-v">${escapeHtml(siteCode)}</div>
+        </div>
+
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Typology</div>
+          <div class="tomb-info-v">${escapeHtml(typology)}</div>
+        </div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Reliability</div>
+          <div class="tomb-info-v">${escapeHtml(reliab)}</div>
+        </div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Province / Region</div>
+          <div class="tomb-info-v">${escapeHtml(provReg)}</div>
+        </div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Periods</div>
+          <div class="tomb-info-v">${renderBubbles(periods)}</div>
+        </div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Sub-periods</div>
+          <div class="tomb-info-v">${renderBubbles(subperiods)}</div>
+        </div>
+        <div class="tomb-info-row">
+          <div class="tomb-info-k">Geometry source</div>
+          <div class="tomb-info-v">${escapeHtml(geomSrc || '-')}</div>
+        </div>
       </div>
     </div>
   `;
@@ -287,25 +323,77 @@ function attachCarouselLogic(root) {
   const slides = [...viewport.querySelectorAll('.ctx-card')];
   const dots = [...carousel.querySelectorAll('.dot')];
 
+  const prevBtn = carousel.querySelector('.prev');
+  const nextBtn = carousel.querySelector('.next');
+
+  // --- FIX CLICK: portiamo le frecce sopra qualsiasi overlay ---
+  [prevBtn, nextBtn].forEach(btn => {
+    if (btn) {
+      btn.style.position = 'relative';
+      btn.style.zIndex = '1000';
+      btn.style.pointerEvents = 'auto';
+      // opzionale ma utile in caso di click che "passano sotto"
+      btn.style.background = btn.style.background || '#fff';
+    }
+  });
+
+  // Se ho 0 o 1 contesto, niente carosello vero
+  if (total <= 1) {
+    slides.forEach((el, k) => el.toggleAttribute('hidden', k !== 0));
+    dots.forEach((d, k) => d.classList.toggle('active', k === 0));
+    return;
+  }
+
   let index = 0;
+
   function show(i) {
-    index = (i + total) % total;
+    // normalizza in [0 .. total-1] anche per negativi
+    index = ((i % total) + total) % total;
     slides.forEach((el, k) => el.toggleAttribute('hidden', k !== index));
     dots.forEach((d, k) => d.classList.toggle('active', k === index));
   }
-  carousel.querySelector('.prev')?.addEventListener('click', () => show(index - 1));
-  carousel.querySelector('.next')?.addEventListener('click', () => show(index + 1));
-  dots.forEach(d => d.addEventListener('click', () => show(Number(d.getAttribute('data-go')))));
 
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      show(index - 1);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      show(index + 1);
+    });
+  }
+
+  dots.forEach(d => {
+    d.addEventListener('click', () => {
+      const goTo = Number(d.getAttribute('data-go'));
+      if (Number.isFinite(goTo)) {
+        show(goTo);
+      }
+    });
+  });
+
+  // swipe left/right sul riquadro grande
   let sx = null;
   viewport.addEventListener('pointerdown', (e) => { sx = e.clientX; });
   viewport.addEventListener('pointerup', (e) => {
     if (sx == null) return;
     const dx = e.clientX - sx;
     sx = null;
-    if (dx > 30) show(index - 1);
-    else if (dx < -30) show(index + 1);
+    if (dx > 30) {
+      show(index - 1);
+    } else if (dx < -30) {
+      show(index + 1);
+    }
   });
+
+  // stato iniziale
+  show(0);
 }
 
 /* ========= MAIN ========= */

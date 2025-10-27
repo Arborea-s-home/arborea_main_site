@@ -118,3 +118,8 @@
   white-space: normal;
   overflow: visible;
 }
+
+/* Per i token non corsivi (es. L., sp., Vill.) */
+.no-italic {
+  font-style: normal;
+}

@@ -34,12 +34,15 @@ async function preloadLegendaTaxa() {
 
 (async () => {
   /* URL params */
-  const params = new URLSearchParams(window.location.search);
+  const params   = new URLSearchParams(window.location.search);
   const fidParam = params.get("fid");
   const provParam = params.get("province");
   const regParam  = params.get("region");
-  if (!fidParam && !provParam && !regParam) {
-    alert("Parametro mancante: usa ?fid=ID oppure ?province=Nome oppure ?region=Nome");
+  const allParam  = params.get("all"); // <--- NEW
+
+  // consenti anche la modalità "all"
+  if (!fidParam && !provParam && !regParam && !allParam) {
+    alert("Parametro mancante: usa ?fid=ID oppure ?province=Nome oppure ?region=Nome oppure ?all=1");
     return;
   }
 
@@ -130,6 +133,7 @@ async function preloadLegendaTaxa() {
   /* Filtraggio contesti */
   let contestiBase = contestiData.features.filter(f => {
     const p = f.properties || {};
+    if (allParam) return true; // <--- prendi tutto il database
     if (fidParam)  return String(p.parent_id) === String(fidParam);
     if (provParam) return (p.province || "").trim().toLowerCase() === String(provParam).trim().toLowerCase();
     if (regParam)  return (p.region   || "").trim().toLowerCase() === String(regParam).trim().toLowerCase();
@@ -199,11 +203,22 @@ async function preloadLegendaTaxa() {
 
   /* Filtraggio siti */
   let sitiSelezionati = [];
-  if (fidParam) {
-    sitiSelezionati = sitiData.features.filter(s => String(s.properties?.fid) === String(fidParam));
+  if (allParam) {
+    // modalità globale: tutti i siti
+    sitiSelezionati = sitiData.features;
+  } else if (fidParam) {
+    sitiSelezionati = sitiData.features.filter(
+      s => String(s.properties?.fid) === String(fidParam)
+    );
   } else {
-    const parentIds = new Set(contestiBase.map(c => Number(c.properties?.parent_id)).filter(Number.isFinite));
-    sitiSelezionati = sitiData.features.filter(s => parentIds.has(Number(s.properties?.fid)));
+    const parentIds = new Set(
+      contestiBase
+        .map(c => Number(c.properties?.parent_id))
+        .filter(Number.isFinite)
+    );
+    sitiSelezionati = sitiData.features.filter(s =>
+      parentIds.has(Number(s.properties?.fid))
+    );
   }
 
   /* Raster (se presente): ora nessun toggle — se c’è lo mostriamo */

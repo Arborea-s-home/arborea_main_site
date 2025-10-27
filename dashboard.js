@@ -204,130 +204,143 @@ class Dashboard {
     }
   }
   
-  rebuildSitesList() {
-    if (!this.allSites) return;
-  
-    const container = document.getElementById('mapped-sites-container');
-    container.innerHTML = '<h3>Siti</h3>';
-  
-    // Raggruppa: Regione → Provincia → Siti
-    const byRegion = {};
-    this.allSites.forEach(site => {
-      const region = site.properties.region || '—';
-      const province = site.properties.province || '—';
-      if (!byRegion[region]) byRegion[region] = {};
-      if (!byRegion[region][province]) byRegion[region][province] = [];
-      byRegion[region][province].push(site);
-    });
-  
-// Costruisci accordion annidato con caret separato
-Object.keys(byRegion).sort().forEach(region => {
-  const regionAcc = document.createElement('div');
-  regionAcc.className = 'region-accordion';
+rebuildSitesList() {
+  if (!this.allSites) return;
 
-  // riga titolo regione: [caret]  Regione (N)  → click su titolo = apri pagina, click su caret = toggle
-  const regionRow = document.createElement('div');
-  regionRow.className = 'region-row';
+  const container = document.getElementById('mapped-sites-container');
+  container.innerHTML = `
+    <h3>Siti</h3>
+    <button id="see-all-records-btn" class="see-all-records-btn">
+      see all records
+    </button>
+  `;
 
-  const regionCaret = document.createElement('button');
-  regionCaret.className = 'caret';
-  regionCaret.setAttribute('aria-label', `Espandi ${region}`);
-  regionCaret.textContent = '▸';
-
-  const regionBtn = document.createElement('button');
-  regionBtn.className = 'region-title';
-  const regionCount = Object.values(byRegion[region]).reduce((acc, arr) => acc + arr.length, 0);
-  regionBtn.textContent = `${region} (${regionCount})`;
-
-  // click su titolo Regione → vai alla pagina per regione
-  regionBtn.addEventListener('click', () => {
-    window.location.href = getPath(`record_necropoli/necropoli/index.html?region=${encodeURIComponent(region)}`);
+  // Raggruppa: Regione → Provincia → Siti
+  const byRegion = {};
+  this.allSites.forEach(site => {
+    const region = site.properties.region || '—';
+    const province = site.properties.province || '—';
+    if (!byRegion[region]) byRegion[region] = {};
+    if (!byRegion[region][province]) byRegion[region][province] = [];
+    byRegion[region][province].push(site);
   });
 
-  // wrapper province
-  const provincesWrap = document.createElement('div');
-  provincesWrap.className = 'region-list';
-  provincesWrap.style.display = 'none';
+  // Costruisci accordion annidato con caret separato
+  Object.keys(byRegion).sort().forEach(region => {
+    const regionAcc = document.createElement('div');
+    regionAcc.className = 'region-accordion';
 
-  // caret: apre/chiude solo il gruppo, non naviga
-  regionCaret.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = provincesWrap.style.display === 'none';
-    provincesWrap.style.display = open ? 'block' : 'none';
-    regionCaret.classList.toggle('open', open);
-  });
+    const regionRow = document.createElement('div');
+    regionRow.className = 'region-row';
 
-  regionRow.appendChild(regionCaret);
-  regionRow.appendChild(regionBtn);
-  regionAcc.appendChild(regionRow);
+    const regionCaret = document.createElement('button');
+    regionCaret.className = 'caret';
+    regionCaret.setAttribute('aria-label', `Espandi ${region}`);
+    regionCaret.textContent = '▸';
 
-  // Provinces
-  Object.keys(byRegion[region]).sort().forEach(prov => {
-    const provAcc = document.createElement('div');
-    provAcc.className = 'province-accordion';
+    const regionBtn = document.createElement('button');
+    regionBtn.className = 'region-title';
+    const regionCount = Object.values(byRegion[region]).reduce((acc, arr) => acc + arr.length, 0);
+    regionBtn.textContent = `${region} (${regionCount})`;
 
-    const provRow = document.createElement('div');
-    provRow.className = 'province-row';
-
-    const provCaret = document.createElement('button');
-    provCaret.className = 'caret';
-    provCaret.setAttribute('aria-label', `Espandi ${prov}`);
-    provCaret.textContent = '▸';
-
-    const provBtn = document.createElement('button');
-    provBtn.className = 'province-title';
-    provBtn.textContent = `${prov} (${byRegion[region][prov].length})`;
-
-    // click su titolo Provincia → vai alla pagina per provincia
-    provBtn.addEventListener('click', () => {
-      window.location.href = getPath(`record_necropoli/necropoli/index.html?province=${encodeURIComponent(prov)}`);
+    regionBtn.addEventListener('click', () => {
+      window.location.href = getPath(
+        `record_necropoli/necropoli/index.html?region=${encodeURIComponent(region)}`
+      );
     });
 
-    const sitesUl = document.createElement('ul');
-    sitesUl.className = 'province-sites';
-    sitesUl.style.display = 'none';
+    const provincesWrap = document.createElement('div');
+    provincesWrap.className = 'region-list';
+    provincesWrap.style.display = 'none';
 
-    byRegion[region][prov]
-      .sort((a, b) => (a.properties.name || '').localeCompare(b.properties.name || ''))
-      .forEach(site => {
-        const li = document.createElement('li');
-        const btn = document.createElement('button');
-        const typ = site.properties.typology || '—';
-        const name = site.properties.name || 'Unnamed site';
-        btn.textContent = `${name} (${typ})`;
-        btn.className = 'mapped-site-button';
-        btn.dataset.fid = site.properties.fid;
+    regionCaret.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = provincesWrap.style.display === 'none';
+      provincesWrap.style.display = open ? 'block' : 'none';
+      regionCaret.classList.toggle('open', open);
+    });
 
-        btn.addEventListener('click', () => {
-          const fid = site.properties.fid;
-          if (fid != null) {
-            window.location.href = getPath(`record_necropoli/necropoli/index.html?fid=${encodeURIComponent(fid)}`);
-          }
-        });
+    regionRow.appendChild(regionCaret);
+    regionRow.appendChild(regionBtn);
+    regionAcc.appendChild(regionRow);
 
-        li.appendChild(btn);
-        sitesUl.appendChild(li);
+    Object.keys(byRegion[region]).sort().forEach(prov => {
+      const provAcc = document.createElement('div');
+      provAcc.className = 'province-accordion';
+
+      const provRow = document.createElement('div');
+      provRow.className = 'province-row';
+
+      const provCaret = document.createElement('button');
+      provCaret.className = 'caret';
+      provCaret.setAttribute('aria-label', `Espandi ${prov}`);
+      provCaret.textContent = '▸';
+
+      const provBtn = document.createElement('button');
+      provBtn.className = 'province-title';
+      provBtn.textContent = `${prov} (${byRegion[region][prov].length})`;
+
+      provBtn.addEventListener('click', () => {
+        window.location.href = getPath(
+          `record_necropoli/necropoli/index.html?province=${encodeURIComponent(prov)}`
+        );
       });
 
-    // caret provincia: apre/chiude la lista siti
-    provCaret.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const open = sitesUl.style.display === 'none';
-      sitesUl.style.display = open ? 'block' : 'none';
-      provCaret.classList.toggle('open', open);
+      const sitesUl = document.createElement('ul');
+      sitesUl.className = 'province-sites';
+      sitesUl.style.display = 'none';
+
+      byRegion[region][prov]
+        .sort((a, b) => (a.properties.name || '').localeCompare(b.properties.name || ''))
+        .forEach(site => {
+          const li = document.createElement('li');
+          const btn = document.createElement('button');
+          const typ = site.properties.typology || '—';
+          const name = site.properties.name || 'Unnamed site';
+          btn.textContent = `${name} (${typ})`;
+          btn.className = 'mapped-site-button';
+          btn.dataset.fid = site.properties.fid;
+
+          btn.addEventListener('click', () => {
+            const fid = site.properties.fid;
+            if (fid != null) {
+              window.location.href = getPath(
+                `record_necropoli/necropoli/index.html?fid=${encodeURIComponent(fid)}`
+              );
+            }
+          });
+
+          li.appendChild(btn);
+          sitesUl.appendChild(li);
+        });
+
+      provCaret.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = sitesUl.style.display === 'none';
+        sitesUl.style.display = open ? 'block' : 'none';
+        provCaret.classList.toggle('open', open);
+      });
+
+      provRow.appendChild(provCaret);
+      provRow.appendChild(provBtn);
+      provAcc.appendChild(provRow);
+      provAcc.appendChild(sitesUl);
+      provincesWrap.appendChild(provAcc);
     });
 
-    provRow.appendChild(provCaret);
-    provRow.appendChild(provBtn);
-    provAcc.appendChild(provRow);
-    provAcc.appendChild(sitesUl);
-    provincesWrap.appendChild(provAcc);
+    regionAcc.appendChild(provincesWrap);
+    container.appendChild(regionAcc);
   });
 
-  regionAcc.appendChild(provincesWrap);
-  container.appendChild(regionAcc);
-});
-  }  
+  // <<< NUOVO: click sul bottone "see all records"
+  const allBtn = document.getElementById('see-all-records-btn');
+  if (allBtn) {
+    allBtn.addEventListener('click', () => {
+      const baseUrl = getPath('record_necropoli/necropoli/index.html');
+      window.location.href = `${baseUrl}?all=1`;
+    });
+  }
+}
 
   createDownloadEntry() {
     const legend = document.getElementById('legend');

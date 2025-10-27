@@ -47,7 +47,7 @@
 
 .obj-header {
   display: grid;
-  grid-template-columns: minmax(44px, 56px) 1fr; /* icona + titolo */
+  grid-template-columns: minmax(44px, 56px) 1fr minmax(44px, 64px); /* icona | titolo | badge ID */
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -55,6 +55,7 @@
   background: #fafafa;
 }
 
+/* header icona rimane uguale */
 .obj-header-icon {
   width: clamp(44px, 6vw, 64px);
   height: clamp(44px, 6vw, 64px);
@@ -64,16 +65,85 @@
   display: block;
 }
 
+/* titolo tassonomico */
+.obj-header-title {
+  min-width: 0;
+}
 .obj-header-precise {
   font-size: clamp(16px, 2.1vw, 20px);
   font-weight: 700;
   color: #111;
+  line-height: 1.2;
 }
 .obj-header-family {
   font-size: clamp(14px, 1.8vw, 16px);
   font-style: italic;
   color: #444;
   margin-top: 2px;
+  line-height: 1.2;
+}
+
+/* badge Arborea_ID speculare all'icona */
+.obj-header-id {
+  width: clamp(44px, 6vw, 64px);
+  height: clamp(44px, 6vw, 64px);
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.08);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align:center;
+  line-height:1.15;
+  color:#111;
+  font-weight:600;
+  font-size:10px;
+}
+
+.obj-header-id-label {
+  font-size:9px;
+  line-height:1.1;
+  font-weight:600;
+  color:#444;
+}
+
+.obj-header-id-val {
+  font-size:12px;
+  font-weight:700;
+  color:#111;
+  margin-top:2px;
+}
+
+@media (max-width: 520px) {
+  .obj-header {
+    grid-template-columns: 44px 1fr 44px; /* icona | titolo | badge */
+    gap: 10px;
+  }
+  .obj-header-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .obj-header-id {
+    width: 44px;
+    height: 44px;
+    font-size:9px;
+  }
+  .obj-header-id-val {
+    font-size:11px;
+  }
+  .obj-header-precise {
+    font-size: 15px;
+  }
+  .obj-header-family  {
+    font-size: 13px;
+  }
+
+  .obj-body {
+    grid-template-columns: 1fr;
+  }
+  .obj-divider { display: none; }
+  .obj-col { padding: 8px 2px; }
 }
 
 /* --- Body: due colonne + divisore --------------------------------------- */
@@ -224,4 +294,54 @@
 .province-map .province-poly {
   /* leggerissimo blur per rendere il bordo più “morbido” */
   filter: blur(1.0px);
+}
+
+/* === Lista di chip (smistamento) === */
+.obj-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+.obj-chip {
+  appearance: none;
+  border: 1px solid var(--chip-border, #43a047);    /* verde scuro di default */
+  background: var(--chip-bg, #ecfdf5);              /* verde chiarissimo di default */
+  border-radius: 999px;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+  transition: box-shadow .12s, background-color .12s;
+}
+.obj-chip:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  /* al hover possiamo leggermente scurire, ma se vuoi puoi lasciarlo invariato */
+  filter: brightness(0.97);
+}
+.obj-chip-title {
+  display:block;
+  font-weight:700;
+  color:#111;
+  font-size:13px;
+  line-height:1.2;
+}
+.obj-chip-sub {
+  display:block;
+  color:#4b5563;
+  font-size:12px;
+  line-height:1.2;
+}
+
+/* back */
+.obj-back { padding: 10px 14px 0; }
+.obj-back-btn {
+  appearance: none; border: 1px solid #d1d5db; background:#fff; color:#111;
+  border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;
+}
+.obj-back-btn:hover { background:#f9fafb; }
+.obj-detail { padding: 6px 0 0; }
+
+.no-italic {
+  font-style: normal;
 }

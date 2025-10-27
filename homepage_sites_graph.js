@@ -58,7 +58,7 @@ function ensureUI() {
   const host = document.getElementById('mapped-sites-list');
   if (!host) return null;
 
-  // Barra modalità (lista/grafico)
+  // 1. Barra modalità (lista/grafico)
   let bar = host.querySelector('.sites-mode-bar');
   if (!bar) {
     bar = document.createElement('div');
@@ -78,7 +78,29 @@ function ensureUI() {
     host.prepend(bar);
   }
 
-  // Card grafico
+  // 2. Bottone "See all records" sempre visibile, SUBITO sotto la barra modalità
+  let seeAllBtn = host.querySelector('.see-all-records-btn');
+  if (!seeAllBtn) {
+    seeAllBtn = document.createElement('button');
+    seeAllBtn.className = 'see-all-records-btn';
+    seeAllBtn.textContent = 'See all records';
+
+    // comportamento: vai alla pagina completa
+    seeAllBtn.addEventListener('click', () => {
+      // se nella tua versione originale passavi parametri (es. regione selezionata)
+      // ricicla quella logica qui:
+      window.location.href = getPath('dettaglio_regioni/dettaglio.html');
+    });
+
+    // inserisci il bottone subito dopo la barra .sites-mode-bar
+    if (bar.nextSibling) {
+      host.insertBefore(seeAllBtn, bar.nextSibling);
+    } else {
+      host.appendChild(seeAllBtn);
+    }
+  }
+
+  // 3. Card grafico (contenitore del donut, caption, tabellina province ecc.)
   let graphWrap = document.getElementById('sites-graph-container');
   if (!graphWrap) {
     graphWrap = document.createElement('div');
@@ -88,18 +110,27 @@ function ensureUI() {
         <div class="graph-header">
           <div class="graph-title">Distribuzione siti per regione</div>
         </div>
+
         <div class="graph-actions">
           <a id="sites-open-region" class="graph-link" href="#" target="_blank" hidden>Region samples</a>
           <a id="sites-open-province" class="graph-link" href="#" target="_blank" hidden>Province samples</a>
           <button class="graph-back" id="sites-graph-back" title="Torna alla vista per regioni">↩</button>
         </div>
+
         <div class="graph-canvas-wrap">
           <canvas id="sites-pie"></canvas>
         </div>
-        <div class="graph-caption" id="sites-graph-caption">Clicca su una regione per vedere il dettaglio per province.</div>
+
+        <div class="graph-caption" id="sites-graph-caption">
+          Clicca su una regione per vedere il dettaglio per province.
+        </div>
+
         <div class="sites-table-wrapper" id="sites-graph-table" style="display:none;"></div>
       </div>
     `;
+
+    // ⚠ importante: graphWrap va comunque nell'host, ma ora
+    // il bottone "see all" è già stato inserito subito dopo la barra.
     host.appendChild(graphWrap);
   }
 
@@ -113,6 +144,7 @@ function ensureUI() {
     canvas: document.getElementById('sites-pie'),
     linkRegion: document.getElementById('sites-open-region'),
     linkProvince: document.getElementById('sites-open-province'),
+    seeAllBtn // se ti serve in futuro
   };
 }
 

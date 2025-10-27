@@ -61,11 +61,20 @@ export function createPopupContent({
     detailBtn.textContent = 'Full Details';
     detailBtn.className = 'dettaglio-btn';
     detailBtn.onclick = () => {
-      window.location.href = getPath(`dettaglio_regioni/dettaglio.html?feature=${encodeURIComponent(rawName)}${group === 'municipality' ? '&group=municipality' : ''}`);
+      window.location.href = getPath(
+        `dettaglio_regioni/dettaglio.html?feature=${encodeURIComponent(rawName)}${group === 'municipality' ? '&group=municipality' : ''}`
+      );
     };
     chartWrapper.appendChild(detailBtn);
 
-    // Contenitore vero del grafico (dopo il pulsante)
+    // Caption esplicativa del grafico (in apice)
+    const chartCaption = document.createElement('div');
+    chartCaption.className = 'chart-caption';
+    chartCaption.textContent =
+      'Bars show how common each site type is in this area compared to the average (100% = average). Green = above average, red = below.';
+    chartWrapper.appendChild(chartCaption);
+
+    // Contenitore vero del grafico (canvas va qui dentro)
     const chartContainer = document.createElement('div');
     chartContainer.style.height = chartWrapper.style.minHeight;
     chartContainer.style.width = '100%';
