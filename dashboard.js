@@ -208,11 +208,10 @@ rebuildSitesList() {
   if (!this.allSites) return;
 
   const container = document.getElementById('mapped-sites-container');
+
+  // header della sezione lista, SENZA più il bottone "see all records"
   container.innerHTML = `
     <h3>Siti</h3>
-    <button id="see-all-records-btn" class="see-all-records-btn">
-      see all records
-    </button>
   `;
 
   // Raggruppa: Regione → Provincia → Siti
@@ -243,6 +242,7 @@ rebuildSitesList() {
     const regionCount = Object.values(byRegion[region]).reduce((acc, arr) => acc + arr.length, 0);
     regionBtn.textContent = `${region} (${regionCount})`;
 
+    // click sul nome regione → pagina filtrata per regione
     regionBtn.addEventListener('click', () => {
       window.location.href = getPath(
         `record_necropoli/necropoli/index.html?region=${encodeURIComponent(region)}`
@@ -253,6 +253,7 @@ rebuildSitesList() {
     provincesWrap.className = 'region-list';
     provincesWrap.style.display = 'none';
 
+    // caret regione apre/chiude elenco province
     regionCaret.addEventListener('click', (e) => {
       e.stopPropagation();
       const open = provincesWrap.style.display === 'none';
@@ -264,6 +265,7 @@ rebuildSitesList() {
     regionRow.appendChild(regionBtn);
     regionAcc.appendChild(regionRow);
 
+    // Province dentro la regione
     Object.keys(byRegion[region]).sort().forEach(prov => {
       const provAcc = document.createElement('div');
       provAcc.className = 'province-accordion';
@@ -280,6 +282,7 @@ rebuildSitesList() {
       provBtn.className = 'province-title';
       provBtn.textContent = `${prov} (${byRegion[region][prov].length})`;
 
+      // click sul nome provincia → pagina filtrata per provincia
       provBtn.addEventListener('click', () => {
         window.location.href = getPath(
           `record_necropoli/necropoli/index.html?province=${encodeURIComponent(prov)}`
@@ -290,6 +293,7 @@ rebuildSitesList() {
       sitesUl.className = 'province-sites';
       sitesUl.style.display = 'none';
 
+      // lista siti della provincia
       byRegion[region][prov]
         .sort((a, b) => (a.properties.name || '').localeCompare(b.properties.name || ''))
         .forEach(site => {
@@ -297,10 +301,12 @@ rebuildSitesList() {
           const btn = document.createElement('button');
           const typ = site.properties.typology || '—';
           const name = site.properties.name || 'Unnamed site';
+
           btn.textContent = `${name} (${typ})`;
           btn.className = 'mapped-site-button';
           btn.dataset.fid = site.properties.fid;
 
+          // click su singolo sito → dettaglio sito
           btn.addEventListener('click', () => {
             const fid = site.properties.fid;
             if (fid != null) {
@@ -314,6 +320,7 @@ rebuildSitesList() {
           sitesUl.appendChild(li);
         });
 
+      // caret provincia apre/chiude elenco siti
       provCaret.addEventListener('click', (e) => {
         e.stopPropagation();
         const open = sitesUl.style.display === 'none';
@@ -331,15 +338,6 @@ rebuildSitesList() {
     regionAcc.appendChild(provincesWrap);
     container.appendChild(regionAcc);
   });
-
-  // <<< NUOVO: click sul bottone "see all records"
-  const allBtn = document.getElementById('see-all-records-btn');
-  if (allBtn) {
-    allBtn.addEventListener('click', () => {
-      const baseUrl = getPath('record_necropoli/necropoli/index.html');
-      window.location.href = `${baseUrl}?all=1`;
-    });
-  }
 }
 
   createDownloadEntry() {

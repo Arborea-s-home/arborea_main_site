@@ -78,21 +78,21 @@ function ensureUI() {
     host.prepend(bar);
   }
 
-  // 2. Bottone "See all records" sempre visibile, SUBITO sotto la barra modalità
-  let seeAllBtn = host.querySelector('.see-all-records-btn');
+  // 2. Bottone "See all records" SEMPRE visibile, subito sotto la barra modalità
+  //    -> lo identifichiamo con un id dedicato così NON confondiamo col bottone legacy
+  let seeAllBtn = host.querySelector('#see-all-records-global');
   if (!seeAllBtn) {
     seeAllBtn = document.createElement('button');
-    seeAllBtn.className = 'see-all-records-btn';
+    seeAllBtn.id = 'see-all-records-global';     // <-- id nuovo
+    seeAllBtn.className = 'see-all-records-btn'; // mantiene lo styling esistente
     seeAllBtn.textContent = 'See all records';
 
-    // comportamento: vai alla pagina completa
+    // URL corretto richiesto: index.html?all=1
     seeAllBtn.addEventListener('click', () => {
-      // se nella tua versione originale passavi parametri (es. regione selezionata)
-      // ricicla quella logica qui:
-      window.location.href = getPath('dettaglio_regioni/dettaglio.html');
+      window.location.href = getPath('record_necropoli/necropoli/index.html?all=1');
     });
 
-    // inserisci il bottone subito dopo la barra .sites-mode-bar
+    // lo mettiamo subito dopo la barra .sites-mode-bar
     if (bar.nextSibling) {
       host.insertBefore(seeAllBtn, bar.nextSibling);
     } else {
@@ -100,7 +100,7 @@ function ensureUI() {
     }
   }
 
-  // 3. Card grafico (contenitore del donut, caption, tabellina province ecc.)
+  // 3. Card grafico (contenitore donut, caption, tabellina province)
   let graphWrap = document.getElementById('sites-graph-container');
   if (!graphWrap) {
     graphWrap = document.createElement('div');
@@ -128,9 +128,6 @@ function ensureUI() {
         <div class="sites-table-wrapper" id="sites-graph-table" style="display:none;"></div>
       </div>
     `;
-
-    // ⚠ importante: graphWrap va comunque nell'host, ma ora
-    // il bottone "see all" è già stato inserito subito dopo la barra.
     host.appendChild(graphWrap);
   }
 
@@ -144,7 +141,7 @@ function ensureUI() {
     canvas: document.getElementById('sites-pie'),
     linkRegion: document.getElementById('sites-open-region'),
     linkProvince: document.getElementById('sites-open-province'),
-    seeAllBtn // se ti serve in futuro
+    seeAllBtn // può tornare utile in futuro
   };
 }
 

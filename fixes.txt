@@ -24,6 +24,7 @@ rendere ricercabili i taxa anche per nomi desueti --> ❌
 eliminare il box di "affinità" dalla scheda dettaglio  --> ❌
 aggiornamento nomi file/URL --> ❌
 inserire obbligo di download bibliografia --> ❌ (da capire se vogliamo mantenere tale sezione)
+inserire riferimento esplicito a obiettivi del progetto nella pagina iniziale (sotto il logo) --> ❌
 
 aggiornare in inglese homepage --> ❌
 aggiornare in inglese pagina dettaglio --> ❌
