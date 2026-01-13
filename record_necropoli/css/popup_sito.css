@@ -144,3 +144,139 @@
   font-size:11px;
 }
 .ctx-head .bubble-wrap{ justify-content:flex-end; }
+
+/* =========================
+   SITE MODAL (overlay)
+========================= */
+body.site-modal-open { overflow: hidden; }
+
+.site-modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: rgba(15, 23, 42, .52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.site-modal-panel{
+  position: relative;
+  width: min(920px, 94vw);
+  max-height: min(88vh, 860px);
+  overflow: auto;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(0,0,0,.30);
+}
+
+.site-modal-close{
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,.92);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+  color: #334155;
+}
+.site-modal-close:hover{ filter: brightness(0.98); }
+
+/* il wrapper interno resta quello che già stai usando */
+.site-modal-panel .popup-tomba-wrapper.popup-large{
+  width: 100%;
+  max-width: 920px;
+  padding: 14px 14px 16px;
+}
+
+/* =========================
+   SITE OVERVIEW BOX
+========================= */
+.site-overview{
+  margin-top: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+}
+.site-overview-title{
+  font-weight: 800;
+  color: #4a3a7a;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.site-overview-body{
+  font-size: 13px;
+  color: #111827;
+  line-height: 1.45;
+}
+.site-overview-body p{
+  margin: 0 0 10px;
+}
+.site-overview-body p:last-child{ margin-bottom: 0; }
+.site-overview-empty{ color:#6b7280; }
+
+/* =========================
+   CONTEXTS TAB: MINI MAP
+========================= */
+.ctx-mini-map{
+  width: 100%;
+  height: 260px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+/* attributo OSM */
+.ctx-mini-attrib{
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-size: 11px;
+  color: #334155;
+  background: rgba(255,255,255,.90);
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 3px 7px;
+  border-radius: 9px;
+}
+
+/* frecce: assicura laterali e sopra la preview */
+.ctx-carousel{ position:relative; }
+.ctx-nav{
+  z-index: 1200;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ctx-nav.prev{ left: 8px; }
+.ctx-nav.next{ right: 8px; }
+
+/* =========================
+   REFERENCES TAB
+========================= */
+.site-refs{
+  display: grid;
+  gap: 12px;
+}
+.site-refs-block{
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+.site-refs-title{
+  font-weight: 800;
+  color: #4a3a7a;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.site-refs-body .refs-list{
+  margin: 0;
+  padding-left: 18px;
+}

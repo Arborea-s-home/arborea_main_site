@@ -3,27 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <title>Site Plan / Contexts</title>
+
   <link rel="stylesheet" href="../css/popup_object.css" />
   <link rel="stylesheet" href="../css/popup_sito.css" />
   <link rel="stylesheet" href="../css/record_necropoli.css" />
   <link rel="stylesheet" href="../css/site_graph.css" />
   <link rel="stylesheet" href="../css/samples_graph.css" />
   <link rel="stylesheet" href="../css/timebar_detail.css" />
+  <link rel="stylesheet" href="../css/schede.css" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/georaster"></script>
   <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
+
 <body>
-  <div id="dashboard">
-    <a id="logo-link" href="#">
-      <img id="dashboard-logo" />
-    </a>
+  <!-- ===== SIDEBAR ===== -->
+  <aside id="dashboard" aria-label="Sidebar dashboard">
+    <!-- Header sticky -->
+    <div class="sb-header">
+      <a id="logo-link" class="sb-brand" href="#" aria-label="Home">
+        <span class="sb-logo-wrap">
+          <img id="dashboard-logo" alt="Project logo" />
+        </span>
+        <span class="sb-brand-text">
+          <span class="sb-title">Site Plan</span>
+          <span class="sb-subtitle">Contexts • Samples • Sites</span>
+        </span>
+      </a>
+
+      <div class="sb-header-actions">
+        <!-- Info page: icona libro -->
+        <a href="#" class="sb-iconbtn" id="info-link" aria-label="Info page" title="Info page">
+          <i class="bi bi-book"></i>
+        </a>
+      </div>
+    </div>
 
     <script type="module">
       import { getPath } from '../../path_utils.js';
@@ -33,114 +57,194 @@
       if (infoLink) infoLink.href = getPath("./info/info.html");
     </script>
 
-    <div class="dashboard-section" id="visualization-controls">
-      <h3>Layers on map</h3>
-      <div class="control-item">
-        <label class="switch">
-          <input type="checkbox" id="toggle-oggetti" checked>
-          <span class="slider round"></span>
-        </label>
-        <span>Samples</span>
-      </div>
-    </div>
-
-    <!-- Reliability range -->
-    <div class="precision-compact">
-      <div class="precision-header">
-        <span class="precision-title">Geographic's placment quality</span>
-        <button class="dq-help" aria-describedby="dq-tip" aria-label="Come leggere i valori">?</button>
-        <div class="dq-tooltip" id="dq-tip" role="tooltip">
-          <strong>0</strong> altissima affidabilità<br>
-          <strong>1</strong> alta affidabilità<br>
-          <strong>2</strong> media affidabilità<br>
-          <strong>3</strong> bassa affidabilità<br>
-          <strong>4</strong> molto bassa / dubbia
+    <div class="sb-body">
+      <!-- QUICK CONTROLS: compatto -->
+      <section class="dashboard-section sb-card sb-compact" id="visualization-controls" aria-label="Quick controls">
+        <div class="sb-card-head sb-card-head-tight">
+          <h3 class="sb-h">
+            <i class="bi bi-sliders2"></i>
+            Quick controls
+          </h3>
+          <span class="sb-chip sb-chip-soft">Map</span>
         </div>
-        <span class="precision-range-chip" id="precision-range-label">0–4</span>
-      </div>
 
-      <div class="precision-range" id="precision-range">
-        <div class="range-track"></div>
-        <div class="range-fill" id="precision-range-fill"></div>
-        <span class="thumb-bubble bubble-min" id="prec-bubble-min">0</span>
-        <span class="thumb-bubble bubble-max" id="prec-bubble-max">4</span>
-        <input type="range" id="precision-min" min="0" max="4" step="1" value="0" aria-label="min affidabilita">
-        <input type="range" id="precision-max" min="0" max="4" step="1" value="4" aria-label="max affidabilita">
-      </div>
-    </div>
-
-    <div class="dashboard-section" id="site-chart-section" x-data="{ open: false, rendered: false }">
-      <h3 @click="open = !open; if (!rendered) { window.renderSiteGraphLazy(); rendered = true; }" style="cursor: pointer;">
-        Context Types
-        <span x-text="open ? '▲' : '▼'" style="float: right; font-size: 14px;"></span>
-      </h3>
-      <div id="site-chart-container" x-show="open" x-transition>
-        <canvas id="siteChartCanvas" width="300" height="300"></canvas>
-      </div>
-    </div>
-
-    <div class="dashboard-section" id="samples-chart-section" x-data="{ open: false }">
-      <h3 id="samples-chart-header" @click="open = !open">
-        Samples (Top 10)
-        <span style="float:right;font-size:14px;" x-text="open ? '▲' : '▼'"></span>
-      </h3>
-    
-      <div style="display:flex;justify-content:center;gap:10px;align-items:center;padding:6px 12px;">
-        <span class="samp-toggle">
-          Family
-          <label class="switch" style="transform:scale(.9);">
-            <input type="checkbox" id="samples-graph-toggle" />
-            <span class="slider round"></span>
+        <!-- toggles compatti -->
+        <div class="sb-grid-compact" role="group" aria-label="Layer toggles">
+          <label class="sb-toggle sb-toggle-compact">
+            <input type="checkbox" id="toggle-oggetti">
+            <span class="sb-switch" aria-hidden="true"></span>
+            <span class="sb-label">
+              <svg class="sb-ico-leaf"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-leaf" viewBox="0 0 16 16">
+                <path d="M1.4 1.7c.216.289.65.84 1.725 1.274 1.093.44 2.884.774 5.834.528l.37-.023c1.823-.06 3.117.598 3.956 1.579C14.16 6.082 14.5 7.41 14.5 8.5c0 .58-.032 1.285-.229 1.997q.198.248.382.54c.756 1.2 1.19 2.563 1.348 3.966a1 1 0 0 1-1.98.198c-.13-.97-.397-1.913-.868-2.77C12.173 13.386 10.565 14 8 14c-1.854 0-3.32-.544-4.45-1.435-1.125-.887-1.89-2.095-2.391-3.383C.16 6.62.16 3.646.509 1.902L.73.806zm-.05 1.39c-.146 1.609-.008 3.809.74 5.728.457 1.17 1.13 2.213 2.079 2.961.942.744 2.185 1.22 3.83 1.221 2.588 0 3.91-.66 4.609-1.445-1.789-2.46-4.121-1.213-6.342-2.68-.74-.488-1.735-1.323-1.844-2.308-.023-.214.237-.274.38-.112 1.4 1.6 3.573 1.757 5.59 2.045 1.227.215 2.21.526 3.033 1.158.058-.39.075-.782.075-1.158 0-.91-.288-1.988-.975-2.792-.626-.732-1.622-1.281-3.167-1.229l-.316.02c-3.05.253-5.01-.08-6.291-.598a5.3 5.3 0 0 1-1.4-.811"/>
+              </svg>
+              Samples
+            </span>
           </label>
-          Species
+
+          <label class="sb-toggle sb-toggle-compact">
+            <input type="checkbox" id="toggle-contesti" checked>
+            <span class="sb-switch" aria-hidden="true"></span>
+            <span class="sb-label">
+              <i class="bi bi-bounding-box-circles"></i>
+              Contexts
+            </span>
+          </label>
+
+          <label class="sb-toggle sb-toggle-compact">
+            <input type="checkbox" id="toggle-siti" checked>
+            <span class="sb-switch" aria-hidden="true"></span>
+            <span class="sb-label">
+              <i class="bi bi-geo-alt"></i>
+              Sites
+            </span>
+          </label>
+        </div>
+
+        <!-- cards button compatto -->
+        <button
+          id="toggle-sites-cards"
+          class="cards-toggle-btn sb-btn sb-btn-compact"
+          type="button"
+          aria-pressed="false"
+        >
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+          Sites cards
+          <span class="sb-btn-suffix"><i class="bi bi-arrow-right-short"></i></span>
+        </button>
+      </section>
+
+      <!-- RELIABILITY: compatto -->
+      <section class="dashboard-section sb-card sb-compact precision-compact" aria-label="Placement reliability">
+        <div class="sb-card-head sb-card-head-tight">
+          <h3 class="sb-h">
+            <i class="bi bi-shield-check"></i>
+            Placement reliability
+          </h3>
+
+          <div class="sb-head-right">
+            <span class="sb-chip sb-chip-soft" id="precision-range-label">0–4</span>
+
+            <div class="precision-help">
+              <button class="dq-help" aria-describedby="dq-tip" aria-label="Reliability scale help">?</button>
+              <div class="dq-tooltip" id="dq-tip" role="tooltip">
+                <strong>0 — Survey-grade</strong><br>
+                Precise coordinates from direct survey and/or geodetic control.<br><br>
+
+                <strong>1 — Georeferenced sources</strong><br>
+                Indirect placement from georeferenced plans/datasets, reliable external GIS sources and/or extant features.<br><br>
+
+                <strong>2 — Remote/cartographic approximation</strong><br>
+                Indirect placement from cartography and/or satellite imagery enabling a good positional approximation.<br><br>
+
+                <strong>3 — Qualitative approximation</strong><br>
+                Indirect placement from qualitative evidence (oral/bibliographic); treat location and size as approximate.<br><br>
+
+                <strong>4 — Symbolic location</strong><br>
+                Symbolic/representative placement (not a measured position).
+              </div>
+            </div>
+          </div>
+        </div>
+
         </span>
-      </div>
-    
-      <div id="samples-chart-container" x-show="open" x-transition>
-        <canvas id="samplesChartCanvas" width="280" height="280"></canvas>
-      </div>
-    
-      <!-- piccola legenda con icone (solo top-10) -->
-      <div id="samples-mini-legend" x-show="open" x-transition></div>
-    </div>
 
-    <div class="dashboard-section" id="info-section">
-      <a href="#" class="info-link" id="info-link">ℹ️ Info Page</a>
-    </div>
-  </div>
+        <div class="precision-range" id="precision-range">
+          <div class="range-track"></div>
+          <div class="range-fill" id="precision-range-fill"></div>
+           <input type="range" id="precision-min" min="0" max="4" step="1" value="0" aria-label="min affidabilita">
+          <input type="range" id="precision-max" min="0" max="4" step="1" value="4" aria-label="max affidabilita">
+        </div>
+      </section>
 
+      <!-- Context Types chart -->
+      <section class="dashboard-section sb-card" id="site-chart-section" x-data="{ open: false, rendered: false }">
+        <button
+          type="button"
+          class="sb-accordion"
+          @click="open = !open; if (!rendered) { window.renderSiteGraphLazy(); rendered = true; }"
+          :aria-expanded="open.toString()"
+          aria-controls="site-chart-container"
+        >
+          <span class="sb-acc-left">
+            <i class="bi bi-pie-chart"></i>
+            Context Types
+          </span>
+          <span class="sb-acc-right" aria-hidden="true" x-text="open ? '▲' : '▼'"></span>
+        </button>
+
+        <div id="site-chart-container" class="sb-accordion-panel" x-show="open" x-transition>
+          <canvas id="siteChartCanvas" width="300" height="300"></canvas>
+        </div>
+      </section>
+
+      <!-- Samples chart -->
+      <section class="dashboard-section sb-card" id="samples-chart-section" x-data="{ open: false }">
+        <button
+          type="button"
+          class="sb-accordion"
+          id="samples-chart-header"
+          @click="open = !open"
+          :aria-expanded="open.toString()"
+          aria-controls="samples-chart-container"
+        >
+          <span class="sb-acc-left">
+            <i class="bi bi-bar-chart-line"></i>
+            Samples (Top 10)
+          </span>
+          <span class="sb-acc-right" aria-hidden="true" x-text="open ? '▲' : '▼'"></span>
+        </button>
+
+        <div class="sb-toggle-row" x-show="open" x-transition>
+          <span class="samp-toggle">
+            Family
+            <label class="switch" style="transform:scale(.9);">
+              <input type="checkbox" id="samples-graph-toggle" />
+              <span class="slider round"></span>
+            </label>
+            Species
+          </span>
+        </div>
+
+        <div id="samples-chart-container" class="sb-accordion-panel" x-show="open" x-transition>
+          <canvas id="samplesChartCanvas" width="280" height="280"></canvas>
+        </div>
+
+        <div id="samples-mini-legend" x-show="open" x-transition></div>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Map -->
   <div id="map"></div>
+  <div id="cards-view" class="cards-view" aria-hidden="true"></div>
 
   <!-- Script principali -->
   <script type="module" src="map_viewer.js"></script>
   <script type="module" src="timebar_detail.js"></script>
-<script type="module">
-  import { Tutorial } from './tutorial_necropoli.js';
 
-  // attende un evento o “capisce” che la condizione è già vera
-  const wait = (name, check, timeout = 10000) => new Promise((resolve) => {
-    if (check?.()) return resolve();
-    const t = setTimeout(resolve, timeout);
-    document.addEventListener(name, () => { clearTimeout(t); resolve(); }, { once: true });
-  });
+  <script type="module">
+    import { Tutorial } from './tutorial_necropoli.js';
 
-  const isDetailReady  = () => typeof window.__detail_computePhaseCounts === 'function';
-  const isTimebarReady = () => !!document.getElementById('timebar-detail')?.dataset.ready;
+    const wait = (name, check, timeout = 10000) => new Promise((resolve) => {
+      if (check?.()) return resolve();
+      const t = setTimeout(resolve, timeout);
+      document.addEventListener(name, () => { clearTimeout(t); resolve(); }, { once: true });
+    });
 
-  // avvia il tutorial quando entrambe le cose sono pronte
-  Promise.all([
-    wait('detail:ready',  isDetailReady),
-    wait('timebar:ready', isTimebarReady)
-  ]).then(() => {
-    // doppio rAF: assicura layout “stabile”
-    requestAnimationFrame(() => {
+    const isDetailReady  = () => typeof window.__detail_computePhaseCounts === 'function';
+    const isTimebarReady = () => !!document.getElementById('timebar-detail')?.dataset.ready;
+
+    Promise.all([
+      wait('detail:ready',  isDetailReady),
+      wait('timebar:ready', isTimebarReady)
+    ]).then(() => {
       requestAnimationFrame(() => {
-        new Tutorial();
-        // nudge: forza un recalcolo del posizionamento della barra sotto l’overlay
-        window.dispatchEvent(new Event('resize'));
+        requestAnimationFrame(() => {
+          new Tutorial();
+          window.dispatchEvent(new Event('resize'));
+        });
       });
     });
-  });
-</script>
+  </script>
 </body>
 </html>

@@ -1,14 +1,25 @@
-// popup_tombe.js – Context popup (taxa): bar/donut by qt OR plain list by entity + info tab with geometry preview
+// popup_tombe.js – Context popup (taxa):
+// - single context view: charts (qt) OR list (qualitative), + Info + Overview
+// - multi "sub-contexts" view (unique samples.properties.context within same context_id):
+//   shows only 2 previews at a time with arrows, expandable to full view per sub-context,
+//   plus "Group all" to ignore sub-contexts and aggregate by context_id.
+//
+// NOTE: This file sets container.__destroy() so you can call it from Leaflet popupclose cleanup.
+
 import { getPath } from '../../path_utils.js';
+import {
+  createQtDonutChart,
+  createQtBarChart,
+  chooseLogScale,
+  makeModelColors
+} from './modal_chart.js';
 
 /* === Carica CSS del popup (con controllo duplicati) === */
 (function loadPopupTombeCSS() {
   if ([...document.styleSheets].some(s => s.href && s.href.includes('popup_tombe.css'))) return;
   let href;
   try { href = new URL('../css/popup_tombe.css', import.meta.url).href; } catch (_) {}
-  if (!href) href = (typeof getPath === 'function')
-      ? getPath('css/popup_tombe.css')
-      : '../css/popup_tombe.css';
+  if (!href) href = (typeof getPath === 'function') ? getPath('css/popup_tombe.css') : '../css/popup_tombe.css';
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = href;
@@ -23,6 +34,79 @@ function loadChartJsIfNeeded() {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
     s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+  });
+}
+
+/* ========= STOP propagation to Leaflet (fix "buttons jump"/popup close) ========= */
+function shieldFromLeaflet(el) {
+  if (!el) return;
+  const stop = (e) => { try { e.stopPropagation(); } catch {} };
+  ['click','dblclick','mousedown','mouseup','pointerdown','pointerup','touchstart','touchend','contextmenu','wheel']
+    .forEach(ev => el.addEventListener(ev, stop, { passive: ev === 'wheel' }));
+
+  try {
+    if (window.L?.DomEvent) {
+      window.L.DomEvent.disableClickPropagation(el);
+      window.L.DomEvent.disableScrollPropagation(el);
+    }
+  } catch {}
+}
+
+/* ========= inline SVG icons ========= */
+function makeSvgIcon(name) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('fill', 'currentColor');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const path = document.createElementNS(ns, 'path');
+  if (name === 'arrow-left') {
+    path.setAttribute('d',
+      'M15 8a.5.5 0 0 0-.5-.5H3.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L3.707 8.5H14.5A.5.5 0 0 0 15 8z'
+    );
+  } else if (name === 'arrows-fullscreen') {
+    path.setAttribute('d',
+      'M1 1v5h1V2h4V1H1zm13 0h-5v1h4v4h1V1zM1 14h5v-1H2V9H1v5zm13-5h-1v4h-4v1h5V9z'
+    );
+  } else if (name === 'chevron-left') {
+    path.setAttribute('d',
+      'M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'
+    );
+  } else if (name === 'chevron-right') {
+    path.setAttribute('d',
+      'M4.646 14.354a.5.5 0 0 1 0-.708L10.293 8 4.646 2.354a.5.5 0 1 1 .708-.708l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708 0z'
+    );
+  } else {
+    path.setAttribute('d','M3 3h10v10H3z');
+  }
+
+  svg.appendChild(path);
+  return svg;
+}
+
+function makeIconButton({ label, title, icon, className = 'ctx-btn ghost' }) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = className;
+  if (title) b.title = title;
+
+  const ico = document.createElement('span');
+  ico.className = 'ctx-btn-ico';
+  ico.appendChild(makeSvgIcon(icon));
+  const txt = document.createElement('span');
+  txt.textContent = label;
+
+  b.appendChild(ico);
+  b.appendChild(txt);
+  return b;
+}
+
+function stopForButton(btn) {
+  if (!btn) return;
+  const stop = (e) => { try { e.stopPropagation(); } catch {} };
+  ['mousedown', 'pointerdown', 'touchstart', 'contextmenu', 'dblclick'].forEach((ev) => {
+    btn.addEventListener(ev, stop, { passive: true });
   });
 }
 
@@ -136,9 +220,12 @@ function removeLegend(container) {
   const old1 = container.querySelector('.legend-collapsible');
   if (old1) old1.remove();
 }
+
 function buildLegend(container, chart, labels, colors, images, options = {}) {
   const { collapsible = false, startOpen = true, mode = 'donut', valuesRef = [] } = options;
+
   removeLegend(container);
+
   let hostEl = container;
   if (collapsible) {
     const details = document.createElement('details');
@@ -148,31 +235,56 @@ function buildLegend(container, chart, labels, colors, images, options = {}) {
     container.appendChild(details);
     hostEl = details.querySelector('.legend-body');
   }
+
   const legend = document.createElement('div');
   legend.className = 'donut-legend';
+
   labels.forEach((label, i) => {
-    const item = document.createElement('div'); item.className = 'donut-legend-item';
-    const swatch = document.createElement('span'); swatch.className = 'donut-legend-swatch'; swatch.style.setProperty('--legend-color', colors[i]);
+    const item = document.createElement('div');
+    item.className = 'donut-legend-item';
+
+    const swatch = document.createElement('span');
+    swatch.className = 'donut-legend-swatch';
+    swatch.style.setProperty('--legend-color', colors[i]);
+
     const img = document.createElement('img');
     const icon = images[label];
     img.src = (icon && icon.complete && icon.naturalWidth) ? icon.src : getPath('images/objects/other.png');
     if (icon && !icon.complete) icon.addEventListener('load', () => { img.src = icon.src; }, { once: true });
     swatch.appendChild(img);
-    const text = document.createElement('span'); text.className = 'donut-legend-label'; text.textContent = label;
-    item.appendChild(swatch); item.appendChild(text);
+
+    const text = document.createElement('span');
+    text.className = 'donut-legend-label';
+    text.textContent = label;
+
+    item.appendChild(swatch);
+    item.appendChild(text);
+
     item.addEventListener('click', () => {
+      if (!chart) return;
+
+      // ✅ DONUT: usa il toggle nativo (così re-click riporta visibile)
       if (mode === 'donut') {
-        const visible = chart.getDataVisibility(i);
-        chart.toggleDataVisibility(i); chart.update(); item.classList.toggle('disabled', visible);
-      } else {
-        const ds = chart.data.datasets[0];
-        const hidden = ds.data[i] == null;
-        ds.data[i] = hidden ? valuesRef[i] : null; chart.update();
-        item.classList.toggle('disabled', !hidden);
+        const wasVisible = (typeof chart.getDataVisibility === 'function') ? chart.getDataVisibility(i) : true;
+        if (typeof chart.toggleDataVisibility === 'function') {
+          chart.toggleDataVisibility(i);
+        }
+        chart.update();
+        item.classList.toggle('disabled', wasVisible); // se prima era visibile, ora è nascosto
+        return;
       }
+
+      // BAR: toggle via null (serve valuesRef)
+      const ds = chart.data.datasets[0];
+      const hidden = ds.data[i] == null;
+      ds.data[i] = hidden ? valuesRef[i] : null;
+      chart.update();
+      item.classList.toggle('disabled', !hidden);
     });
+
     legend.appendChild(item);
   });
+
   hostEl.appendChild(legend);
 }
 
@@ -203,9 +315,7 @@ function renderMiniLegend(where, labels, values, images, topN = 6) {
   where.appendChild(box);
 }
 
-/* ========= Toolbar locale s_type (carpological / wood / all)
-   NOTE: all’inizializzazione NON chiama il callback, imposta solo lo stato visivo.
-   ============================================================================ */
+/* ========= Toolbar locale s_type ========= */
 function buildLocalSTypeToolbar(defaultVal, onChange) {
   const wrap = document.createElement('div');
   wrap.className = 'stype-local-toolbar';
@@ -217,6 +327,7 @@ function buildLocalSTypeToolbar(defaultVal, onChange) {
     img.onerror = () => { img.onerror=null; img.src = getPath('images/logo_semplificato.png'); };
     b.appendChild(img);
     b.addEventListener('click', () => setActive(value));
+    stopForButton(b);
     return b;
   };
 
@@ -230,305 +341,320 @@ function buildLocalSTypeToolbar(defaultVal, onChange) {
     if (typeof onChange === 'function') onChange(v);
   }
 
-  // Stato visivo iniziale, senza chiamare onChange
   const initial = defaultVal || 'carpological';
   [btnCarpo, btnWood, btnAll].forEach(b => b.classList.toggle('active', b.dataset.val === initial));
 
   return { el: wrap, setActive };
 }
 
-/* ========== MAIN POPUP ==========
- * feature = CONTEXT
- * samples = array di samples (già filtrati per quel contesto dal chiamante)
- */
-export function createTombaPopup(contextFeature, samples = []) {
-  const p = contextFeature?.properties || {};
-  const container = document.createElement('div');
-  container.className = 'popup-tomba-wrapper';
+/* ========= Overview parsing (c_notes) ========= */
+function parseContextOverview(raw) {
+  const txt = String(raw ?? '').trim();
+  if (!txt) return { overview: '/', bibliography: '/' };
 
-  // Titolo
-  const title = document.createElement('div');
-  title.className = 'popup-tomba-title';
-  title.textContent = p.context_name || 'Context';
-  container.appendChild(title);
+  const m = txt.match(/(^|\n)\s*Bibliography\s*:\s*/i);
+  if (!m) return { overview: txt, bibliography: '/' };
 
-  // === Decide modalità: grafici (qt) oppure lista (entity/en) ===
-  const modeIsQt = String(p.q_e || '').toLowerCase() === 'qt';
+  const idx = m.index ?? -1;
+  if (idx < 0) return { overview: txt, bibliography: '/' };
 
-  // === Stato grafici PRIMA di creare la toolbar (evita TDZ) ===
-  let chart = null;
-  let currentMode = modeIsQt ? 'bar' : 'info';
+  const cut = idx + m[0].length;
+  const overview = txt.slice(0, idx).trim() || '/';
+  const bibliography = txt.slice(cut).trim() || '/';
+  return { overview, bibliography };
+}
+function buildOverviewHtmlForContext(feature) {
+  const p = feature?.properties || {};
+  const { overview, bibliography } = parseContextOverview(p.c_notes);
+  return `
+    <div class="ctx-overview-card">
+      <div class="ctx-overview-head">
+        <div class="ctx-overview-title">Context Overview</div>
+      </div>
 
-  // === Default filtro locale s_type ===
-  let localSType = 'carpological';
+      <div class="ctx-overview-body">
+        <div class="ctx-overview-text">${escapeHtml(overview)}</div>
 
-  // === Helpers filtraggio/aggregazione ===
-  function filterBySType(arr, st) {
-    if (!st || st === 'all') return arr;
-    return arr.filter(s => String(s?.properties?.s_type || '').trim().toLowerCase() === st);
-  }
-  function aggregateQt(subset) {
-    const sums = new Map(); let totalQt = 0;
-    subset.forEach(s => {
-      const sp = s.properties || {};
-      const label = (sp.precise_taxon || sp.taxon || 'Unclassified').trim();
-      const n = Number(sp.qt ?? sp.quantity);
-      if (Number.isFinite(n)) {
-        totalQt += n; sums.set(label, (sums.get(label) || 0) + n);
-      }
-    });
-    return { labels: Array.from(sums.keys()), values: Array.from(sums.values()), totalQt };
-  }
-  function rowsForList(subset) {
-    return subset.map(s => {
-      const sp = s.properties || {};
-      return {
-        label: (sp.precise_taxon || sp.taxon || 'Unclassified').trim(),
-        entity: (sp.entity == null || sp.entity === '') ? null : String(sp.entity)
-      };
-    });
-  }
-
-  // Info riassuntiva (su TUTTI i samples passati)
-  const info = document.createElement('div');
-  info.className = 'popup-tomba-info';
-  const samplesCount = samples.length;
-  const taxaSetAll = new Set(samples.map(s => (s.properties?.precise_taxon || s.properties?.taxon || 'Unclassified').trim()));
-  info.innerHTML = `
-    <div class="info-item"><span class="info-label">Samples:</span> <span class="info-value">${samplesCount}</span></div>
-    <div class="info-item"><span class="info-label">Taxa:</span> <span class="info-value">${taxaSetAll.size}</span></div>
+        <div class="ctx-overview-bib">
+          <div class="ctx-overview-bib-title">Context Overview Bibliography</div>
+          <div class="ctx-overview-bib-text">${escapeHtml(bibliography)}</div>
+        </div>
+      </div>
+    </div>
   `;
-  container.appendChild(info);
-
-  // Switcher
-  const switcher = document.createElement('div');
-  switcher.className = 'tomb-switcher';
-  switcher.innerHTML = `
-    ${modeIsQt ? `<button class="ts-btn active" data-mode="bar">Bar chart</button>
-                  <button class="ts-btn" data-mode="donut">Donut</button>` : ''}
-    <button class="ts-btn ${modeIsQt ? '' : 'active'}" data-mode="info">Info</button>
-    <span class="scale-badge" style="display:none;">log scale</span>
-  `;
-  container.appendChild(switcher);
-
-  // Canvas container + canvas (creati PRIMA della toolbar)
-  const canvasWrap = document.createElement('div');
-  canvasWrap.className = 'popup-tomba-canvas-container';
-  const canvas = document.createElement('canvas');
-  canvas.className = 'popup-tomba-canvas';
-  canvasWrap.appendChild(canvas);
-  if (modeIsQt) container.appendChild(canvasWrap);
-
-  // mini legend container (anteprima top-6)
-  const miniLegendHost = document.createElement('div');
-  miniLegendHost.className = 'mini-legend-host';
-  if (modeIsQt) container.insertBefore(miniLegendHost, canvasWrap);
-
-  // Info box
-  const infoBox = document.createElement('div');
-  infoBox.className = 'tomb-info-box';
-  infoBox.style.display = modeIsQt ? 'none' : 'block';
-  infoBox.innerHTML = buildInfoHtmlForContext(contextFeature);
-  container.appendChild(infoBox);
-
-  // LISTA per s_type (quando q_e != 'qt')
-  let listBySTypeEl = null;
-  if (!modeIsQt) {
-    const carpoRows = rowsForList(filterBySType(samples, 'carpological'));
-    const woodRows  = rowsForList(filterBySType(samples, 'wood'));
-    listBySTypeEl = buildTaxaListBySType(carpoRows, woodRows);
-    container.appendChild(listBySTypeEl);
-  }
-
-  // Toolbar s_type (creata DOPO i contenitori; di default non chiama render)
-  let stypeCtrl = null;
-  if (modeIsQt) {
-    stypeCtrl = buildLocalSTypeToolbar('carpological', (val) => {
-      localSType = (val === 'all') ? 'all' : val;
-      if (currentMode === 'bar') renderBar();
-      else if (currentMode === 'donut') renderDonut();
-    });
-    container.insertBefore(stypeCtrl.el, canvasWrap); // sopra ai grafici
-  }
-
-  function destroyChart() { if (chart) { try { chart.destroy(); } catch {} chart = null; } }
-  function noDataNotice(msg = 'No data for selected type') {
-    destroyChart(); removeLegend(container);
-    canvasWrap.style.display = 'none';
-    infoBox.style.display = 'block';
-    if (listBySTypeEl) listBySTypeEl.style.display = 'none';
-    infoBox.innerHTML = `<div class="tomb-info"><div class="tomb-info-row"><div class="tomb-info-k">Notice</div><div class="tomb-info-v">${escapeHtml(msg)}</div></div></div>`;
-    miniLegendHost.innerHTML = '';
-  }
-
-  function renderBar() {
-    if (!modeIsQt) return renderInfo();
-    const subset = filterBySType(samples, localSType);
-    const { labels, values, totalQt } = aggregateQt(subset);
-    if (!labels.length || !totalQt) return noDataNotice();
-
-    canvasWrap.style.display = 'block';
-    infoBox.style.display = 'none';
-    if (listBySTypeEl) listBySTypeEl.style.display = 'none';
-    destroyChart(); removeLegend(container);
-
-    const colors = labels.map((_, i) => palette[i % palette.length]);
-    const borders = colors.map(c => c.replace('0.85', '1'));
-    const { images, ready } = preloadIcons(labels);
-
-    miniLegendHost.innerHTML = '';
-    renderMiniLegend(miniLegendHost, labels, values, images, 6);
-
-    const ctx = canvas.getContext('2d');
-    const max = Math.max(...values), min = Math.max(1, Math.min(...values));
-    const useLog = (max / min) > 25;
-    const badge = switcher.querySelector('.scale-badge');
-    if (badge) badge.style.display = useLog ? 'inline-block' : 'none';
-
-    chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          data: values.slice(),
-          backgroundColor: colors,
-          borderColor: borders,
-          borderWidth: 1,
-          borderRadius: 6,
-          hoverBackgroundColor: colors.map(c => c.replace('0.85','0.95'))
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        layout: { padding: { top: 72 } },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            titleColor: '#fff', bodyColor: '#fff',
-            callbacks: {
-              label: ctx => `${ctx.parsed.y} item(s)`,
-              title: ctx => ctx.label
-            }
-          }
-        },
-        scales: {
-          y: {
-            type: useLog ? 'logarithmic' : 'linear',
-            beginAtZero: false,
-            min: useLog ? 1 : undefined,
-            grid: { color: 'rgba(0,0,0,0.06)', drawBorder: false },
-            ticks: { color: '#666', font: { size: 12 }, callback: v => useLog ? String(v) : v }
-          },
-          x: { grid: { display: false, drawBorder: false }, ticks: { display: false } }
-        }
-      },
-      plugins: [{
-        id: 'iconsAboveBars',
-        afterDraw(c) {
-          const meta = c.getDatasetMeta(0); if (!meta || !meta.data) return;
-          const ctx2 = c.ctx;
-          meta.data.forEach((bar, i) => {
-            const lab = c.data.labels[i];
-            const img = images[lab]; if (!img || !img.complete || !img.naturalWidth) return;
-            const s = Math.min(bar.width * 1.2, 32);
-            const x = bar.x - s/2; const y = bar.y - s - 8;
-            ctx2.beginPath(); ctx2.arc(bar.x, y + s/2, s/2 + 4, 0, Math.PI*2);
-            ctx2.fillStyle = 'rgba(255,255,255,0.95)'; ctx2.fill();
-            ctx2.strokeStyle = colors[i]; ctx2.lineWidth = 1.25; ctx2.stroke();
-            try { ctx2.drawImage(img, x, y, s, s); } catch {}
-          });
-        }
-      }]
-    });
-
-    buildLegend(container, chart, labels, colors, images, {
-      collapsible: true, startOpen: false, mode: 'bar', valuesRef: values
-    });
-
-    ready.then(() => { if (chart) chart.update(); });
-  }
-
-  function renderDonut() {
-    if (!modeIsQt) return renderInfo();
-    const subset = filterBySType(samples, localSType);
-    const { labels, values, totalQt } = aggregateQt(subset);
-    if (!labels.length || !totalQt) return noDataNotice();
-
-    canvasWrap.style.display = 'block';
-    infoBox.style.display = 'none';
-    if (listBySTypeEl) listBySTypeEl.style.display = 'none';
-    destroyChart(); removeLegend(container);
-
-    const colors = labels.map((_, i) => palette[i % palette.length]);
-    const { images, ready } = preloadIcons(labels);
-
-    miniLegendHost.innerHTML = '';
-    renderMiniLegend(miniLegendHost, labels, values, images, 6);
-
-    const ctx = canvas.getContext('2d');
-    chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '55%',
-        plugins: {
-          legend: { display: false },
-          tooltip: { backgroundColor:'rgba(0,0,0,0.85)', titleColor:'#fff', bodyColor:'#fff',
-            callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed} item(s)` } }
-        }
-      }
-    });
-
-    buildLegend(container, chart, labels, colors, images, { collapsible: true, startOpen: true, mode: 'donut' });
-    ready.then(() => { if (chart) chart.update(); });
-  }
-
-  function renderInfo() {
-    destroyChart(); removeLegend(container);
-    canvasWrap.style.display = 'none';
-    infoBox.style.display = 'block';
-    if (listBySTypeEl) listBySTypeEl.style.display = 'block';
-    miniLegendHost.innerHTML = '';
-    const badge = switcher.querySelector('.scale-badge'); if (badge) badge.style.display = 'none';
-  }
-
-  function setActive(mode) {
-    switcher.querySelectorAll('.ts-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-    currentMode = mode;
-  }
-
-  // eventi switcher
-  switcher.addEventListener('click', (e) => {
-    const btn = e.target.closest('.ts-btn'); if (!btn) return;
-    const mode = btn.dataset.mode; setActive(mode);
-    if (mode === 'bar') renderBar();
-    else if (mode === 'donut') renderDonut();
-    else renderInfo();
-  });
-
-  // render iniziale
-  if (modeIsQt) {
-    loadChartJsIfNeeded().then(() => {
-      setActive('bar');           // default bar
-      renderBar();                // default s_type = 'carpological'
-    }).catch(err => { console.warn('[ContextPopup] Chart.js load error:', err); renderInfo(); });
-  } else {
-    setActive('info');
-  }
-
-  return container;
 }
 
-/* ===== taxa list (entity) — usata per le sezioni ===== */
+/* ========= samples grouping ========= */
+function normalizeGroupKey(v) {
+  const s = String(v ?? '').trim();
+  return s || '(unlabeled)';
+}
+function groupSamplesBySubcontext(samples) {
+  const m = new Map();
+  for (const s of (samples || [])) {
+    const p = s?.properties || {};
+    const key = normalizeGroupKey(p.context);
+    if (!m.has(key)) m.set(key, []);
+    m.get(key).push(s);
+  }
+  return m;
+}
+
+/* ========= aggregation helpers ========= */
+function filterBySType(arr, st) {
+  if (!st || st === 'all') return arr;
+  return (arr || []).filter(s => String(s?.properties?.s_type || '').trim().toLowerCase() === st);
+}
+function aggregateQt(subset) {
+  const sums = new Map(); let totalQt = 0;
+  (subset || []).forEach(s => {
+    const sp = s.properties || {};
+    const label = (sp.precise_taxon || sp.taxon || 'Unclassified').trim();
+    const n = Number(sp.qt ?? sp.quantity);
+    if (Number.isFinite(n)) {
+      totalQt += n;
+      sums.set(label, (sums.get(label) || 0) + n);
+    }
+  });
+  return { labels: Array.from(sums.keys()), values: Array.from(sums.values()), totalQt };
+}
+function rowsForList(subset) {
+  return (subset || []).map(s => {
+    const sp = s.properties || {};
+    return {
+      label: (sp.precise_taxon || sp.taxon || 'Unclassified').trim(),
+      entity: (sp.entity == null || sp.entity === '') ? null : String(sp.entity)
+    };
+  });
+}
+
+/* ========= pager (renders only current page; 2 previews max) ========= */
+function mountPagedPreviews(hostEl, factories, pageSize = 2) {
+  const items = Array.isArray(factories) ? factories : [];
+  let start = 0;
+  let current = [];
+  if (!hostEl) return { destroy(){} };
+
+  hostEl.innerHTML = '';
+  hostEl.classList.add('ctx-previews-host');
+
+  const nav = document.createElement('div');
+  nav.className = 'ctx-previews-nav';
+  nav.innerHTML = `
+    <button type="button" class="ctx-nav-btn" data-dir="-1" aria-label="Previous"></button>
+    <div class="ctx-nav-meta"><span class="ctx-nav-count"></span></div>
+    <button type="button" class="ctx-nav-btn" data-dir="1" aria-label="Next"></button>
+  `;
+  const row = document.createElement('div');
+  row.className = 'ctx-previews-row';
+
+  hostEl.appendChild(nav);
+  hostEl.appendChild(row);
+
+  const btnPrev = nav.querySelector('[data-dir="-1"]');
+  const btnNext = nav.querySelector('[data-dir="1"]');
+  const countEl = nav.querySelector('.ctx-nav-count');
+
+  btnPrev.appendChild(makeSvgIcon('chevron-left'));
+  btnNext.appendChild(makeSvgIcon('chevron-right'));
+  stopForButton(btnPrev);
+  stopForButton(btnNext);
+
+  function clampStart(v) {
+    const maxStart = Math.max(0, items.length - pageSize);
+    return Math.max(0, Math.min(maxStart, v));
+  }
+  function destroyCurrent() {
+    current.forEach(x => { try { x?.destroy?.(); } catch {} });
+    current = [];
+    row.innerHTML = '';
+  }
+  function render() {
+    start = clampStart(start);
+    destroyCurrent();
+
+    const slice = items.slice(start, start + pageSize);
+    current = slice.map(fn => {
+      const built = fn();
+      if (built?.el) row.appendChild(built.el);
+      return built || {};
+    });
+
+    const end = Math.min(items.length, start + pageSize);
+    countEl.textContent = items.length ? `${start + 1}–${end} / ${items.length}` : `0 / 0`;
+
+    btnPrev.disabled = (start <= 0);
+    btnNext.disabled = (start >= items.length - pageSize);
+    nav.style.display = (items.length > pageSize) ? 'flex' : 'none';
+  }
+  function onClick(e) {
+    const b = e.target.closest('.ctx-nav-btn');
+    if (!b) return;
+    const dir = Number(b.dataset.dir);
+    start += dir * pageSize;
+    render();
+  }
+
+  nav.addEventListener('click', onClick);
+  render();
+
+  return {
+    destroy() {
+      try { nav.removeEventListener('click', onClick); } catch {}
+      destroyCurrent();
+      try { hostEl.innerHTML = ''; } catch {}
+    }
+  };
+}
+
+/* ========= preview cards ========= */
+function makeGroupCardShell(title, metaText, onExpand) {
+  const card = document.createElement('div');
+  card.className = 'ctx-group-card';
+
+  const head = document.createElement('div');
+  head.className = 'ctx-group-head';
+
+  const name = document.createElement('div');
+  name.className = 'ctx-group-name';
+  name.title = title;
+  name.textContent = title;
+
+  const meta = document.createElement('div');
+  meta.className = 'ctx-group-meta';
+  meta.textContent = metaText || '';
+
+  const expand = document.createElement('button');
+  expand.type = 'button';
+  expand.className = 'ctx-group-expand';
+  expand.title = 'Open';
+  expand.setAttribute('aria-label', 'Open');
+  expand.appendChild(makeSvgIcon('arrows-fullscreen'));
+  stopForButton(expand);
+
+  expand.addEventListener('click', () => {
+    if (typeof onExpand === 'function') onExpand();
+  });
+
+  head.appendChild(name);
+  head.appendChild(meta);
+  head.appendChild(expand);
+
+  const body = document.createElement('div');
+  body.className = 'ctx-group-body';
+
+  card.appendChild(head);
+  card.appendChild(body);
+
+  return { card, body };
+}
+
+function makeQtPreviewFactory(groupLabel, groupSamples, onExpand) {
+  return () => {
+    const { labels, values, totalQt } = aggregateQt(groupSamples);
+    const taxa = labels.length;
+    const samp = groupSamples.length;
+
+    const metaText = `S:${samp}  T:${taxa}  Σ:${totalQt || 0}`;
+    const { card, body } = makeGroupCardShell(groupLabel, metaText, onExpand);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'ctx-mini-canvas-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'ctx-mini-canvas';
+    wrap.appendChild(canvas);
+    body.appendChild(wrap);
+
+    let chart = null;
+    let destroyed = false;
+
+    const render = async () => {
+      try {
+        await loadChartJsIfNeeded();
+        if (destroyed) return;
+
+        if (!labels.length || !totalQt) {
+          body.innerHTML = `<div class="ctx-mini-nodata">No data</div>`;
+          return;
+        }
+
+        const idxs = labels.map((_, i) => i).sort((a,b) => (values[b]||0)-(values[a]||0));
+        const topN = 8;
+        const labs = idxs.slice(0, topN).map(i => labels[i]);
+        const vals = idxs.slice(0, topN).map(i => values[i]);
+        const colors = labs.map((_, i) => palette[i % palette.length]);
+
+        const ctx = canvas.getContext('2d');
+        chart = new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels: labs, datasets: [{ data: vals, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, cutout: '58%' }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
+      } catch {
+        body.innerHTML = `<div class="ctx-mini-nodata">Chart unavailable</div>`;
+      }
+    };
+
+    render();
+
+    return {
+      el: card,
+      destroy() {
+        destroyed = true;
+        try { chart?.destroy?.(); } catch {}
+        chart = null;
+      }
+    };
+  };
+}
+
+function makeListPreviewFactory(groupLabel, groupSamples, onExpand) {
+  return () => {
+    const rows = rowsForList(groupSamples);
+    const samp = groupSamples.length;
+    const taxaSet = new Set(rows.map(r => r.label));
+
+    const metaText = `S:${samp}  T:${taxaSet.size}`;
+    const { card, body } = makeGroupCardShell(groupLabel, metaText, onExpand);
+
+    const top = Array.from(taxaSet).sort((a,b)=>a.localeCompare(b)).slice(0, 8);
+
+    const box = document.createElement('div');
+    box.className = 'taxa-list taxa-list-compact';
+    const ul = document.createElement('ul');
+    top.forEach(t => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="tli-icon"><img src="${iconAbsPathForTaxon(t)}" alt=""></span>
+        <span class="tli-label">${escapeHtml(t)}</span>
+      `;
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+
+    body.appendChild(box);
+
+    if (taxaSet.size > top.length) {
+      const more = document.createElement('div');
+      more.className = 'taxa-list-more';
+      more.textContent = `+ ${taxaSet.size - top.length} more`;
+      body.appendChild(more);
+    }
+
+    return { el: card, destroy(){} };
+  };
+}
+
+/* ===== taxa list (entity) ===== */
 function buildTaxaList(rows) {
   const order = { many: 3, few: 2 };
   const map = new Map();
-  rows.forEach(r => {
+  (rows || []).forEach(r => {
     const e = (r.entity || '').toLowerCase().trim();
     const old = map.get(r.label);
-    if (!old) { map.set(r.label, { entity: e || null, icon: iconAbsPathForTaxon(r.label) }); }
-    else {
+    if (!old) {
+      map.set(r.label, { entity: e || null, icon: iconAbsPathForTaxon(r.label) });
+    } else {
       const prev = old.entity || '';
       const sOld = order[prev] || 0;
       const sNew = order[e] || 0;
@@ -553,7 +679,6 @@ function buildTaxaList(rows) {
   return box;
 }
 
-/* ===== nuova lista per s_type: due sezioni collassabili ===== */
 function buildTaxaListBySType(carpoRows, woodRows) {
   const wrap = document.createElement('div');
   wrap.className = 'taxa-list-byst';
@@ -575,24 +700,26 @@ function buildTaxaListBySType(carpoRows, woodRows) {
   return wrap;
 }
 
-/* ===== Scheda Info (contesto) con mini-geometry + References ===== */
-function buildInfoHtmlForContext(feature) {
-  const p = feature?.properties || {};
-const periods    = (p.parent_chronology_iccd || '').trim();
-const subperiods = (p.chronology_iccd || '').trim();
-const partOf     = p.parent_context || p.site_name_brain || '-';
+/* ===== Scheda Info (contesto) ===== */
+function buildInfoHtmlForContext(feature, opts = {}) {
+  const { includeGeometry = false } = opts;
 
-const rows = [
-  ['Part of', `<span class="js-partof">${escapeHtml(partOf)}</span>`],
-  ['Periods', renderBubbles(periods)],
-  ['Sub-periods', renderBubbles(subperiods)],
-  ['Reliability', escapeHtml(p.c_appr)],
-  ['Province / Region', escapeHtml([p.province, p.region].filter(Boolean).join(' — '))],
-  ['Notes', p.c_notes ? escapeHtml(p.c_notes) : '-'],
-  ['Brain code', p.site_code ? `<a href="https://brainplants.successoterra.net/index.html" target="_blank" rel="noopener">${escapeHtml(p.site_code)}</a>` : '-'],
-  ['Site ID', escapeHtml(p.fid)]
-];
-  // Bibliography → "References" (split su ';')
+  const p = feature?.properties || {};
+  const periods    = (p.parent_chronology_iccd || '').trim();
+  const subperiods = (p.chronology_iccd || '').trim();
+  const partOf     = p.parent_context || p.site_name_brain || '-';
+
+  const rows = [
+    ['Part of', `<span class="js-partof">${escapeHtml(partOf)}</span>`],
+    ['Periods', renderBubbles(periods)],
+    ['Sub-periods', renderBubbles(subperiods)],
+    ['Reliability', escapeHtml(p.c_appr)],
+    ['Province / Region', escapeHtml([p.province, p.region].filter(Boolean).join(' — '))],
+    // NOTE: c_notes moved to Overview (NOT here)
+    ['Brain code', p.site_code ? `<a href="https://brainplants.successoterra.net/index.html" target="_blank" rel="noopener">${escapeHtml(p.site_code)}</a>` : '-'],
+    ['Site ID', escapeHtml(p.fid)]
+  ];
+
   const bibl = (p.bibliography || '').trim();
   if (bibl) {
     const items = bibl.split(';').map(s => s.trim()).filter(Boolean);
@@ -607,7 +734,8 @@ const rows = [
       <div class="tomb-info-v">${v}</div>
     </div>`).join('');
 
-  const geomPreview = geometryPreviewSVG(feature, 420, 180);
+  // 🔻 geometria SOLO se richiesta
+  const geomPreview = includeGeometry ? geometryPreviewSVG(feature, 420, 180) : '';
 
   return `
     <div class="tomb-info">
@@ -616,3 +744,548 @@ const rows = [
     </div>
   `;
 }
+
+/* ========== MAIN POPUP ========== */
+export function createTombaPopup(contextFeature, samples = []) {
+  const p = contextFeature?.properties || {};
+  const container = document.createElement('div');
+  container.className = 'popup-tomba-wrapper';
+
+  shieldFromLeaflet(container);
+
+  const destroyers = [];
+  const cleanupAll = () => { destroyers.splice(0).forEach(fn => { try { fn?.(); } catch {} }); };
+  container.__destroy = cleanupAll;
+
+  const title = document.createElement('div');
+  title.className = 'popup-tomba-title';
+  title.textContent = p.context_name || 'Context';
+  container.appendChild(title);
+
+  const modeIsQt = String(p.q_e || '').toLowerCase() === 'qt';
+
+  const grouped = groupSamplesBySubcontext(samples);
+  const groupKeys = Array.from(grouped.keys());
+  const isMulti = groupKeys.length > 1;
+
+  const info = document.createElement('div');
+  info.className = 'popup-tomba-info';
+  const samplesCount = samples.length;
+  const taxaSetAll = new Set(samples.map(s => (s.properties?.precise_taxon || s.properties?.taxon || 'Unclassified').trim()));
+  let sumQtAll = 0;
+  if (modeIsQt) {
+    samples.forEach(s => {
+      const n = Number(s?.properties?.qt ?? s?.properties?.quantity);
+      if (Number.isFinite(n)) sumQtAll += n;
+    });
+  }
+  info.innerHTML = `
+    <div class="info-item"><span class="info-label">Samples:</span> <span class="info-value">${samplesCount}</span></div>
+    <div class="info-item"><span class="info-label">Taxa:</span> <span class="info-value">${taxaSetAll.size}</span></div>
+    <div class="info-item"><span class="info-label">${modeIsQt ? 'Σqt:' : 'Groups:'}</span>
+      <span class="info-value">${modeIsQt ? sumQtAll : (isMulti ? groupKeys.length : 1)}</span>
+    </div>
+  `;
+  container.appendChild(info);
+
+  const headControls = document.createElement('div');
+  headControls.className = 'ctx-group-toolbar';
+  container.appendChild(headControls);
+
+  let groupAll = false;
+  let detailKey = null;
+  let activeMode = null;
+
+  function renderHeadControls() {
+    headControls.innerHTML = '';
+
+    if (detailKey && isMulti && !groupAll) {
+      const back = makeIconButton({ label: 'Back', title: 'Back', icon: 'arrow-left', className: 'ctx-btn ghost' });
+      stopForButton(back);
+      back.addEventListener('click', () => {
+        detailKey = null;
+        activeMode = modeIsQt ? 'previews' : 'list';
+        renderUI();
+      });
+      headControls.appendChild(back);
+
+      const chip = document.createElement('div');
+      chip.className = 'ctx-group-chip';
+      chip.textContent = detailKey;
+      headControls.appendChild(chip);
+      return;
+    }
+
+    if (isMulti) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ctx-btn primary';
+      btn.textContent = groupAll ? 'Split by sub-context' : 'Group all';
+      stopForButton(btn);
+      btn.addEventListener('click', () => {
+        groupAll = !groupAll;
+        detailKey = null;
+        activeMode = modeIsQt ? (groupAll ? 'bar' : 'previews') : 'list';
+        renderUI();
+      });
+      headControls.appendChild(btn);
+
+      if (!groupAll) {
+        const hint = document.createElement('div');
+        hint.className = 'ctx-group-chip';
+        hint.textContent = `Sub-contexts: ${groupKeys.length}`;
+        headControls.appendChild(hint);
+      }
+    }
+  }
+
+  const switcher = document.createElement('div');
+  switcher.className = 'tomb-switcher';
+  container.appendChild(switcher);
+
+  function setActive(mode) {
+    activeMode = mode;
+    switcher.querySelectorAll('.ts-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  }
+
+  function renderSwitcher() {
+    switcher.innerHTML = '';
+
+    const addBtn = (label, mode, isActive=false) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ts-btn' + (isActive ? ' active' : '');
+      b.dataset.mode = mode;
+      b.textContent = label;
+      stopForButton(b);
+      switcher.appendChild(b);
+      return b;
+    };
+
+    // MULTI (previews) — niente Info (ora è fisso a destra nel modale)
+    if (isMulti && !groupAll && !detailKey) {
+      if (modeIsQt) addBtn('Previews', 'previews', activeMode === 'previews');
+      else addBtn('List', 'list', activeMode === 'list');
+      addBtn('Overview', 'overview', activeMode === 'overview');
+      return;
+    }
+
+    // SINGLE / DETAIL
+    if (modeIsQt) {
+      addBtn('Bar chart', 'bar', activeMode === 'bar');
+      addBtn('Donut', 'donut', activeMode === 'donut');
+      addBtn('Overview', 'overview', activeMode === 'overview');
+
+      const badge = document.createElement('span');
+      badge.className = 'scale-badge';
+      badge.style.display = 'none';
+      badge.textContent = 'log scale';
+      switcher.appendChild(badge);
+    } else {
+      addBtn('List', 'list', activeMode === 'list');
+      addBtn('Overview', 'overview', activeMode === 'overview');
+      const badge = document.createElement('span');
+      badge.className = 'scale-badge';
+      badge.style.display = 'none';
+      switcher.appendChild(badge);
+    }
+  }
+
+  const previewsHost = document.createElement('div');
+  previewsHost.className = 'ctx-previews-or-list';
+  container.appendChild(previewsHost);
+
+  const miniLegendHost = document.createElement('div');
+  miniLegendHost.className = 'mini-legend-host';
+  container.appendChild(miniLegendHost);
+
+  const canvasWrap = document.createElement('div');
+  canvasWrap.className = 'popup-tomba-canvas-container';
+  const canvas = document.createElement('canvas');
+  canvas.className = 'popup-tomba-canvas';
+  canvasWrap.appendChild(canvas);
+  container.appendChild(canvasWrap);
+
+  const overviewBox = document.createElement('div');
+  overviewBox.className = 'ctx-overview-box';
+  overviewBox.innerHTML = buildOverviewHtmlForContext(contextFeature);
+  container.appendChild(overviewBox);
+
+  let stypeCtrl = null;
+  let localSType = 'carpological';
+
+  function ensureSTypeToolbar() {
+    if (!modeIsQt) return;
+    if (stypeCtrl?.el && stypeCtrl.el.isConnected) return;
+    stypeCtrl = buildLocalSTypeToolbar('carpological', (val) => {
+      localSType = (val === 'all') ? 'all' : val;
+      if (activeMode === 'bar' || activeMode === 'donut') renderBody();
+    });
+    container.insertBefore(stypeCtrl.el, canvasWrap);
+    destroyers.push(() => { try { stypeCtrl?.el?.remove?.(); } catch {} stypeCtrl = null; });
+  }
+
+  let chart = null;
+  function destroyChart() { if (chart) { try { chart.destroy(); } catch {} chart = null; } }
+
+  let pager = null;
+  function destroyPager() { try { pager?.destroy?.(); } catch {} pager = null; }
+
+  destroyers.push(() => {
+    destroyPager();
+    destroyChart();
+    removeLegend(container);
+  });
+
+  function getActiveSamples() {
+    if (isMulti && !groupAll && detailKey) return grouped.get(detailKey) || [];
+    return samples;
+  }
+
+  function showOnly(which) {
+    previewsHost.style.display = 'none';
+    miniLegendHost.style.display = 'none';
+    canvasWrap.style.display = 'none';
+    overviewBox.style.display = 'none';
+    removeLegend(container);
+
+    if (which === 'previews' || which === 'list') previewsHost.style.display = 'block';
+    if (which === 'chart') { miniLegendHost.style.display = 'block'; canvasWrap.style.display = 'block'; }
+    if (which === 'overview') overviewBox.style.display = 'block';
+  }
+
+  function noDataNotice(msg = 'No data for selected type') {
+    destroyPager();
+    destroyChart();
+    removeLegend(container);
+    miniLegendHost.innerHTML = '';
+    try { canvasWrap.classList.remove('donut-sheen'); } catch {}
+
+    // mostra l’avviso nel pannello sinistro
+    showOnly('list');
+    previewsHost.classList.remove('ctx-list-box');
+    previewsHost.innerHTML = `<div class="ctx-mini-nodata">${escapeHtml(msg)}</div>`;
+  }
+
+  function renderBar(subsetSamples) {
+    ensureSTypeToolbar();
+    try { canvasWrap.classList.remove('donut-sheen'); } catch {}
+
+    const subset = filterBySType(subsetSamples, localSType);
+    const { labels, values, totalQt } = aggregateQt(subset);
+    if (!labels.length || !totalQt) return noDataNotice();
+
+    showOnly('chart');
+    destroyChart();
+    removeLegend(container);
+
+    const colors = labels.map((_, i) => palette[i % palette.length]);
+    const borders = colors.map(c => c.replace('0.85', '1'));
+    const { images, ready } = preloadIcons(labels);
+
+    miniLegendHost.innerHTML = '';
+    renderMiniLegend(miniLegendHost, labels, values, images, 6);
+
+    const useLog = chooseLogScale(values, 25);
+    const badge = switcher.querySelector('.scale-badge');
+    if (badge) badge.style.display = useLog ? 'inline-block' : 'none';
+
+    const ctx = canvas.getContext('2d');
+    chart = createQtBarChart(ctx, { labels, values, colors, borders, images, useLog });
+
+    buildLegend(container, chart, labels, colors, images, {
+      collapsible: true, startOpen: false, mode: 'bar', valuesRef: values
+    });
+
+    ready.then(() => { if (chart) chart.update(); });
+  }
+
+  function renderDonut(subsetSamples) {
+    ensureSTypeToolbar();
+
+    const subset = filterBySType(subsetSamples, localSType);
+    const { labels, values, totalQt } = aggregateQt(subset);
+    if (!labels.length || !totalQt) return noDataNotice();
+
+    showOnly('chart');
+    destroyChart();
+    removeLegend(container);
+
+    canvasWrap.classList.add('donut-sheen');
+
+    const colors = makeModelColors(labels.length, palette);
+    const { images, ready } = preloadIcons(labels);
+
+    miniLegendHost.innerHTML = '';
+    renderMiniLegend(miniLegendHost, labels, values, images, 6);
+
+    const ctx = canvas.getContext('2d');
+
+    chart = createQtDonutChart(ctx, {
+      labels,
+      values,
+      colors,
+      totalValue: totalQt,
+      cutout: '34%',
+      layoutPadding: { top: 18, right: 96, bottom: 18, left: 96 },
+      variableRadius: { enabled: true, minFactor: 0.18, exp: 1.35 },
+      manhattanLabels: {
+        enabled: true,
+        minPctToShow: 0,
+        minGap: 14,
+        elbowOut: 12,
+        textOut: 56,
+        safePad: 14
+      },
+      centerText: { enabled: true, label: 'Total', value: totalQt }
+    });
+
+    buildLegend(container, chart, labels, colors, images, {
+      collapsible: true,
+      startOpen: true,
+      mode: 'donut',
+      valuesRef: values
+    });
+
+    ready.then(() => { if (chart) chart.update(); });
+  }
+
+  function renderList(subsetSamples) {
+    showOnly('list');
+    destroyPager();
+    destroyChart();
+    removeLegend(container);
+    try { canvasWrap.classList.remove('donut-sheen'); } catch {}
+
+    const carpoRows = rowsForList(filterBySType(subsetSamples, 'carpological'));
+    const woodRows  = rowsForList(filterBySType(subsetSamples, 'wood'));
+    const listBySTypeEl = buildTaxaListBySType(carpoRows, woodRows);
+
+    previewsHost.innerHTML = '';
+    previewsHost.classList.add('ctx-list-box');
+    previewsHost.appendChild(listBySTypeEl);
+
+    const badge = switcher.querySelector('.scale-badge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  function renderPreviews() {
+    showOnly(modeIsQt ? 'previews' : 'list');
+    destroyChart(); removeLegend(container);
+    try { canvasWrap.classList.remove('donut-sheen'); } catch {}
+
+    previewsHost.innerHTML = '';
+    previewsHost.classList.remove('ctx-list-box');
+
+    const keysSorted = groupKeys.slice().sort((a,b) => a.localeCompare(b));
+    const factories = keysSorted.map(k => {
+      const arr = grouped.get(k) || [];
+      const onExpand = () => {
+        detailKey = k;
+        activeMode = modeIsQt ? 'bar' : 'list';
+        renderUI();
+      };
+      return modeIsQt
+        ? makeQtPreviewFactory(k, arr, onExpand)
+        : makeListPreviewFactory(k, arr, onExpand);
+    });
+
+    pager = mountPagedPreviews(previewsHost, factories, 2);
+    destroyers.push(() => { try { pager?.destroy?.(); } catch {} pager = null; });
+
+    const badge = switcher.querySelector('.scale-badge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  function renderBody() {
+    destroyPager();
+    destroyChart();
+    removeLegend(container);
+    miniLegendHost.innerHTML = '';
+
+    renderHeadControls();
+    renderSwitcher();
+
+    const subset = getActiveSamples();
+
+    // MULTI previews
+    if (isMulti && !groupAll && !detailKey) {
+      if (modeIsQt) {
+        if (!activeMode) activeMode = 'previews';
+        setActive(activeMode);
+        if (activeMode === 'overview') { showOnly('overview'); return; }
+        setActive('previews');
+        renderPreviews();
+        return;
+      } else {
+        if (!activeMode) activeMode = 'list';
+        setActive(activeMode);
+        if (activeMode === 'overview') { showOnly('overview'); return; }
+        setActive('list');
+        renderPreviews();
+        return;
+      }
+    }
+
+    // SINGLE / DETAIL
+    if (!activeMode) activeMode = modeIsQt ? 'bar' : 'list';
+    setActive(activeMode);
+
+    if (activeMode === 'overview') { showOnly('overview'); return; }
+
+    if (modeIsQt) {
+      loadChartJsIfNeeded()
+        .then(() => {
+          if (activeMode === 'donut') renderDonut(subset);
+          else renderBar(subset);
+        })
+        .catch(() => { noDataNotice('Chart unavailable'); });
+    } else {
+      renderList(subset);
+    }
+  }
+
+  function renderUI() {
+    destroyPager();
+    destroyChart();
+    removeLegend(container);
+
+    if (!modeIsQt && stypeCtrl?.el) {
+      try { stypeCtrl.el.remove(); } catch {}
+      stypeCtrl = null;
+    }
+    renderBody();
+  }
+
+  switcher.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ts-btn');
+    if (!btn) return;
+    const mode = btn.dataset.mode;
+    setActive(mode);
+    renderUI();
+  });
+
+  if (isMulti && !groupAll) activeMode = modeIsQt ? 'previews' : 'list';
+  else activeMode = modeIsQt ? 'bar' : 'list';
+
+  renderUI();
+  return container;
+}
+
+/* ============================
+   MODAL wrapper (central screen)
+============================ */
+
+let __activeTombaModal = null;
+
+export function closeTombaModal() {
+  try { __activeTombaModal?.close?.(); } catch {}
+}
+
+export function openTombaModal(contextFeature, samples = [], opts = {}) {
+  // chiudi eventuale modale precedente
+  closeTombaModal();
+
+  const title = opts.title || contextFeature?.properties?.context_name || 'Context';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'ctx-modal-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'ctx-modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.tabIndex = -1;
+
+  const head = document.createElement('div');
+  head.className = 'ctx-modal-head';
+
+  const h = document.createElement('div');
+  h.className = 'ctx-modal-title';
+  h.textContent = title;
+
+  const btnClose = document.createElement('button');
+  btnClose.type = 'button';
+  btnClose.className = 'ctx-modal-close';
+  btnClose.setAttribute('aria-label', 'Close');
+  btnClose.innerHTML = '&times;';
+
+  head.appendChild(h);
+  head.appendChild(btnClose);
+
+  // ===== BODY: due colonne (sx contenuto, dx info fissa) =====
+  const body = document.createElement('div');
+  body.className = 'ctx-modal-body';
+
+  const left = document.createElement('div');
+  left.className = 'ctx-modal-left';
+
+  const right = document.createElement('div');
+  right.className = 'ctx-modal-right';
+
+  // contenuto (identico al popup precedente, ma SENZA tab Info)
+  const content = createTombaPopup(contextFeature, samples);
+  left.appendChild(content);
+
+  // INFO fisso a destra (senza preview geometria)
+  right.innerHTML = `
+    <div class="ctx-side-card">
+      <div class="ctx-side-title">Info</div>
+      ${buildInfoHtmlForContext(contextFeature, { includeGeometry: false })}
+    </div>
+  `;
+
+  // evita propagazioni “map-like” se riusi helper (opzionale ma innocuo)
+  try { shieldFromLeaflet(left); } catch {}
+  try { shieldFromLeaflet(right); } catch {}
+
+  body.appendChild(left);
+  body.appendChild(right);
+
+  modal.appendChild(head);
+  modal.appendChild(body);
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  // blocca scroll pagina
+  document.body.classList.add('ctx-modal-open');
+
+  const onEsc = (e) => {
+    if (e.key === 'Escape') close();
+  };
+
+  const close = () => {
+    try { document.removeEventListener('keydown', onEsc); } catch {}
+
+    try {
+      // cleanup charts/timers ecc
+      const c = body.querySelector('.popup-tomba-wrapper') || content;
+      if (c && typeof c.__destroy === 'function') c.__destroy();
+    } catch {}
+
+    try { backdrop.remove(); } catch {}
+    try { document.body.classList.remove('ctx-modal-open'); } catch {}
+
+    __activeTombaModal = null;
+
+    try { opts.onClose?.(); } catch {}
+  };
+
+  // click fuori = chiudi
+  backdrop.addEventListener('mousedown', (e) => {
+    if (e.target === backdrop) close();
+  });
+
+  // stop propagation dentro modale
+  modal.addEventListener('mousedown', (e) => e.stopPropagation());
+
+  btnClose.addEventListener('click', close);
+  document.addEventListener('keydown', onEsc);
+
+  // focus
+  try { modal.focus(); } catch {}
+
+  __activeTombaModal = { close };
+  return close;
+}
+

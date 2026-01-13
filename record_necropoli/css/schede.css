@@ -1,0 +1,402 @@
+/* =========================
+   VIEW MODE: MAP <-> CARDS
+   ========================= */
+
+body.cards-mode #map{
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+
+#cards-view.cards-view{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: calc(320px + 14px);
+  bottom: 0;
+  z-index: 500;     /* sotto filtri (1000+) */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .22s ease, transform .22s ease;
+  overflow-x: hidden; 
+  box-sizing: border-box;
+  background:
+    radial-gradient(1200px 600px at 15% 10%, rgba(43,108,176,.10), transparent 60%),
+    radial-gradient(900px 500px at 75% 30%, rgba(197,94,34,.10), transparent 55%),
+    #f8fafc;
+
+  padding: 14px 22px 140px 16px; 
+}
+
+body.cards-mode #cards-view.cards-view{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px){
+  #cards-view.cards-view{
+    right: calc(280px + 12px);
+    padding-right: 18px;
+  }
+}
+
+/* =========================
+   HEADER
+   ========================= */
+
+.cards-header{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 12px;
+  margin: -14px -16px 12px; /* full bleed */
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+.cards-header-left{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.cards-title{
+  font-weight: 900;
+  letter-spacing: .2px;
+  color: #111827;
+  margin: 0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.cards-search{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.cards-search input{
+  width: 100%;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  background: #fff;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+.cards-search input:focus{
+  border-color: rgba(37,99,235,.55);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.16);
+}
+
+.cards-pager{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 210px;
+  justify-content: flex-end;
+}
+
+.pager-btn{
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  cursor: pointer;
+  transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+.pager-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0,0,0,.08);
+}
+.pager-btn:disabled{
+  opacity: .35;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.pager-meta{
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #334155;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+/* =========================
+   GRID + CARD
+   ========================= */
+
+.cards-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1200px){
+  .cards-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px){
+  .cards-grid{ grid-template-columns: 1fr; }
+}
+
+.site-card{
+  border-radius: 16px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,.06);
+  overflow: hidden;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.site-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.10);
+}
+
+.site-card-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  background: linear-gradient(180deg, rgba(37,99,235,.10), transparent);
+}
+
+.site-card-title{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.25;
+}
+
+.site-card-sub{
+  margin-top: 6px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 700;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ctx-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(34,197,94,.12);
+  color: #065f46;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.open-detail-btn{
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform .14s ease, box-shadow .14s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.open-detail-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0,0,0,.10);
+}
+
+.site-card-body{
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-kv{
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px 10px;
+  font-size: 12.5px;
+}
+
+.site-kv .k{
+  color: #64748b;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  font-size: 11px;
+}
+
+.site-kv .v{
+  color: #0f172a;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-biblio{
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.35;
+  background: rgba(15,23,42,.03);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  padding: 10px 10px;
+}
+
+.site-biblio strong{
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: #64748b;
+}
+
+/* =========================
+   DETAIL VIEW (placeholder)
+   ========================= */
+
+.cards-detail{
+  display: none;
+  border-radius: 18px;
+  background: rgba(255,255,255,.95);
+  border: 1px solid rgba(0,0,0,.10);
+  box-shadow: 0 22px 55px rgba(0,0,0,.15);
+  overflow: hidden;
+}
+
+.cards-view.detail-open .cards-grid,
+.cards-view.detail-open .cards-header{
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+.cards-view.detail-open .cards-detail{
+  display: block;
+  animation: detailIn .22s ease;
+}
+
+@keyframes detailIn{
+  from{ opacity: 0; transform: translateY(10px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+.detail-head{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px;
+  background: linear-gradient(180deg, rgba(197,94,34,.10), transparent);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.detail-title{
+  margin: 0;
+  font-size: 15px;
+  font-weight: 1000;
+  color: #111827;
+}
+
+.detail-back{
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-body{
+  padding: 14px 14px 18px;
+  color: #0f172a;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* =========================
+   SIDEBAR BUTTON
+   ========================= */
+
+.cards-toggle-btn{
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
+  color: #111827;
+  transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+
+.cards-toggle-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0,0,0,.10);
+}
+
+.cards-toggle-btn.active{
+  border-color: rgba(37,99,235,.55);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+  background: rgba(37,99,235,.06);
+}
+
+/* =========================================================
+   MAP-ONLY UI: nascondi durante la Cards View
+   ========================================================= */
+
+body.cards-mode #category-filter,
+body.cards-mode .category-filter,
+body.cards-mode .cf-popover,
+body.cards-mode .cf-fullpanel,
+body.cards-mode .subcategory-container,
+body.cards-mode .subcategory-line{
+  display: none !important;
+}
+
+/* toolbar s_type sulla mappa (ha senso solo in map-mode) */
+body.cards-mode #stype-toolbar{
+  display: none !important;
+}
+
+/* timebar (basso) – copri più possibili id/class per sicurezza */
+body.cards-mode #timebar-detail,
+body.cards-mode #timebar,
+body.cards-mode .timebar,
+body.cards-mode .timebar-detail,
+body.cards-mode [id*="timebar"]{
+  display: none !important;
+}

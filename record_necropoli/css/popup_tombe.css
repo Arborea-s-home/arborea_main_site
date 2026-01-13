@@ -115,6 +115,15 @@
 
 /* --- Chart area --- */
 
+.popup-tomba-canvas-container{
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.leaflet-popup-content{
+  margin: 0 !important;
+}
+
 .popup-tomba-canvas-container {
   position: relative;
   width: 100%;
@@ -253,3 +262,413 @@
   text-overflow:ellipsis;
 }
 .tomb-info-v .bubble-wrap{ justify-content:flex-start; }
+
+/* =========================================================
+   GROUPED VIEW (sub-context thumbnails)
+   ========================================================= */
+
+.popup-tomba-wrapper.popup-tomba-grouped{
+  min-width: 520px;
+  max-width: 980px;
+}
+
+.popup-tomba-subtitle{
+  margin-top: -6px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+.ctx-group-summary{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+.ctx-sum-item{
+  display:flex; align-items:center; justify-content:space-between;
+  background:#fafafa;
+  border:1px solid rgba(0,0,0,0.06);
+  padding:6px 8px;
+  border-radius:8px;
+  font-size: 12.5px;
+}
+.ctx-sum-item .k{ color:#6b7280; font-weight:600; }
+.ctx-sum-item .v{ color:#4a3a7a; font-weight:800; }
+
+.ctx-group-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 8px;
+  margin: 6px 0 10px;
+  flex-wrap: wrap;
+}
+
+.ctx-group-chip{
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  border: 1px solid rgba(0,0,0,0.08);
+  color: #374151;
+}
+
+.ctx-btn{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 13px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ctx-btn:hover{ transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.ctx-btn.primary{ background:#e8f0fe; border-color:#1a73e8; color:#1a73e8; font-weight:700; }
+.ctx-btn.ghost{ background:#fff; border-color: rgba(0,0,0,0.10); color:#111827; }
+.ctx-btn-ico{ width:16px; height:16px; display:inline-flex; }
+.ctx-btn-ico svg{ width:16px; height:16px; display:block; }
+
+.ctx-groups-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 700px){
+  .ctx-groups-grid{ grid-template-columns: 1fr; }
+  .popup-tomba-wrapper.popup-tomba-grouped{ min-width: 320px; }
+}
+
+.ctx-group-card{
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background:#fff;
+  padding: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.ctx-group-head{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ctx-group-name{
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  color:#4a3a7a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ctx-group-meta{
+  font-size: 12px;
+  color:#6b7280;
+  white-space: nowrap;
+}
+
+.ctx-group-expand{
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background:#fff;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#111827;
+}
+.ctx-group-expand svg{ width: 18px; height: 18px; }
+.ctx-group-expand:hover{ box-shadow: 0 2px 10px rgba(0,0,0,.08); transform: translateY(-1px); }
+
+.ctx-group-body{
+  min-height: 160px;
+}
+
+.ctx-mini-canvas-wrap{
+  position: relative;
+  height: 170px;
+  width: 100%;
+}
+.ctx-mini-canvas{
+  width: 100% !important;
+  height: 100% !important;
+  display:block;
+}
+
+.ctx-mini-nodata{
+  font-size: 13px;
+  color:#6b7280;
+  padding: 10px;
+  border: 1px dashed rgba(0,0,0,0.12);
+  border-radius: 10px;
+  background:#fafafa;
+}
+
+.ctx-group-skeleton{
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color:#6b7280;
+  padding: 10px;
+  border: 1px dashed rgba(0,0,0,0.12);
+  border-radius: 10px;
+  background:#fafafa;
+}
+
+/* lista compatta nelle card */
+.taxa-list.taxa-list-compact ul{
+  max-height: 170px;
+  overflow: auto;
+}
+.taxa-list-more{
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* embedded panel (se ti serve in futuro) */
+.popup-tomba-wrapper.embedded{
+  box-shadow:none;
+  border: none;
+  padding: 0;
+}
+
+/* ===== Context Overview ===== */
+.ctx-overview-box { margin-top: 10px; }
+
+.ctx-overview-card{
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.ctx-overview-head{
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: rgba(126,87,194,0.08);
+}
+
+.ctx-overview-title{
+  font-weight: 800;
+  color: #4a3a7a;
+  letter-spacing: .2px;
+}
+
+.ctx-overview-body{
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.ctx-overview-text{
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-size: 13.5px;
+  color: #111827;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ctx-overview-bib{
+  background: #fff;
+  border: 1px dashed rgba(0,0,0,0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ctx-overview-bib-title{
+  font-size: 12px;
+  font-weight: 800;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.ctx-overview-bib-text{
+  font-size: 12.5px;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+/* ===== Qualitative List box ===== */
+.ctx-list-box{ margin-top: 10px; }
+
+/* ===== Previews pager (2 per volta) ===== */
+.ctx-previews-host { margin-top: 10px; }
+
+.ctx-previews-nav{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0 10px;
+  padding: 6px 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.85);
+}
+
+.ctx-nav-btn{
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.ctx-nav-btn:disabled{ opacity: .45; cursor: default; }
+
+.ctx-nav-meta{
+  font-size: 12px;
+  color: #374151;
+  font-weight: 700;
+}
+
+.ctx-previews-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 720px){
+  .ctx-previews-row{ grid-template-columns: 1fr; }
+}
+
+/* ==== Donut "dark card" style (solo quando attivo) ==== */
+.popup-tomba-canvas-container.donut-sheen{
+  border-radius: 18px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.10), rgba(255,255,255,0) 55%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,0)),
+    #0b1324; /* navy scuro tipo immagine */
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+.popup-tomba-canvas-container.donut-sheen .popup-tomba-canvas{
+  background: transparent !important;
+}
+
+/* se vuoi più aria attorno al donut */
+.popup-tomba-canvas-container.donut-sheen{
+  height: 380px; /* oppure 400px */
+}
+
+/* ============================
+   MODAL (Context / Tomb popup)
+============================ */
+
+body.ctx-modal-open{
+  overflow: hidden;
+}
+
+.ctx-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+}
+
+.ctx-modal{
+  width: min(1100px, 96vw);
+  max-height: 92vh;
+  background: rgba(255,255,255,0.98);
+  border-radius: 18px;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ctx-modal-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(248,250,252,0.96);
+  border-bottom: 1px solid rgba(226,232,240,0.95);
+}
+
+.ctx-modal-title{
+  font-weight: 800;
+  font-size: 14px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ctx-modal-close{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.75);
+  background: #fff;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 34px;
+  color: #0f172a;
+}
+.ctx-modal-close:hover{
+  background: rgba(241,245,249,0.95);
+}
+
+.ctx-modal-body{
+  overflow: auto;
+  padding: 0;
+}
+
+/* evita doppio titolo: nel modale teniamo quello della header */
+.ctx-modal .popup-tomba-title{
+  display: none;
+}
+
+/* sicurezza layout */
+.ctx-modal .popup-tomba-wrapper{
+  width: 100%;
+}
+
+.ctx-modal-body{
+  display: grid;
+  grid-template-columns: minmax(720px, 860px) minmax(320px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.ctx-modal-left{
+  min-width: 0;
+}
+
+.ctx-modal-right{
+  min-width: 0;
+  position: sticky;
+  top: 16px;
+  align-self: start;
+}
+
+.ctx-side-card{
+  background: rgba(255,255,255,0.96);
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.ctx-side-title{
+  font-weight: 700;
+  margin-bottom: 8px;
+}
