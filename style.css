@@ -1147,3 +1147,311 @@ html {
   margin-bottom: 6px;
 }
 
+/* =========================
+   Premium Sites Graph look
+   ========================= */
+.sites-graph-card--dark{
+  background:
+    radial-gradient(circle at 25% 18%, rgba(56,189,248,0.22), transparent 38%),
+    radial-gradient(circle at 82% 28%, rgba(168,85,247,0.20), transparent 45%),
+    linear-gradient(180deg, #0b1220 0%, #111a33 55%, #0b1220 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #e5e7eb;
+}
+
+.sites-graph-card--dark .graph-title{ color:#f8fafc; }
+.sites-graph-card--dark .graph-caption{ color: rgba(255,255,255,0.72); }
+.sites-graph-card--dark .graph-back{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.16);
+  color:#e5e7eb;
+}
+.sites-graph-card--dark .graph-back:hover{ background: rgba(255,255,255,0.12); }
+
+.graph-canvas-wrap--dark{
+  position: relative;
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.graph-center-label{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  text-align:center;
+  transform: translateY(-2px);
+}
+
+.graph-center-label .kpi{
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color:#ffffff;
+  text-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+.graph-center-label .sub{
+  font-size: .85rem;
+  margin-top: .15rem;
+  color: rgba(255,255,255,0.72);
+}
+
+/* link azioni in dark card */
+.sites-graph-card--dark .graph-link{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.86);
+}
+.sites-graph-card--dark .graph-link:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+/* =========================
+   Nicer sites accordion list
+   ========================= */
+.region-title, .province-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.acc-label{
+  display:inline-block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding-right: 6px;
+}
+
+.count-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 34px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 800;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #e0e7ff;
+  flex: 0 0 auto;
+}
+
+.count-badge--prov{
+  background:#ecfeff;
+  color:#155e75;
+  border-color:#cffafe;
+}
+
+.mapped-site-button--rich{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.site-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.site-chip{
+  flex: 0 0 auto;
+  font-size: .74rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+/* =========================
+   Hide Download entry (not removed)
+   ========================= */
+.download-entry-card.is-hidden{
+  display: none !important;
+}
+
+/* box unico */
+.sites-panel{
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+  background: #fff;
+}
+.sites-panel-head{
+  padding: .75rem .75rem .6rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.sites-panel-title{
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: .2px;
+}
+.sites-panel-controls{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+.see-all-records-btn--inline{
+  margin: 0;
+  width: auto;
+  padding: .5rem .75rem;
+}
+
+/* tilt “trasversale” SAFE (scale lineare): solo sul canvas, non sulla label */
+.sites-graph-card--dark canvas{
+  transform: scaleY(0.88);
+  transform-origin: center;
+}
+
+/* ===== Sites panel (dark, integrated header) ===== */
+.sites-panel{
+  margin-top: 1rem;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,.10);
+}
+
+.sites-panel--dark{
+  background:
+    radial-gradient(circle at 25% 18%, rgba(56,189,248,0.22), transparent 38%),
+    radial-gradient(circle at 82% 28%, rgba(168,85,247,0.20), transparent 45%),
+    linear-gradient(180deg, #0b1220 0%, #111a33 55%, #0b1220 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #e5e7eb;
+}
+
+.sites-panel-head{
+  padding: .85rem .85rem .7rem;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+
+.sites-panel-title{
+  font-weight: 900;
+  letter-spacing: .2px;
+  color: #f8fafc;
+}
+
+.sites-panel-controls{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.sites-panel--dark .mode-label{
+  color: rgba(255,255,255,0.78);
+  font-size: .85rem;
+}
+
+/* Switch dark */
+.mode-switch--dark input{
+  background: rgba(255,255,255,0.18);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+.mode-switch--dark input::after{
+  background: #fff;
+}
+.mode-switch--dark input:checked{
+  background: rgba(34,197,94,0.95);
+}
+
+/* See all button dark */
+.see-all-records-btn--inline{
+  margin: 0;
+  width: auto;
+  padding: .5rem .75rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0,0,0,.18);
+}
+.see-all-records-btn--dark{
+  background: rgba(59,130,246,0.95);
+}
+.see-all-records-btn--dark:hover{
+  filter: brightness(.95);
+}
+
+.sites-panel-body{
+  padding: .75rem .85rem .9rem;
+}
+
+.graph-actions--top{
+  margin-bottom: .5rem;
+}
+
+/* Canvas wrap dark + tilt “trasversale” SAFE */
+.graph-canvas-wrap--dark{
+  position: relative;
+  height: 300px;
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* tilt solo sul canvas (lineare -> click ok) */
+.graph-canvas-wrap--dark canvas{
+  transform: scaleY(0.88);
+  transform-origin: center;
+}
+
+/* center label (non tiltato) */
+.graph-center-label{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  text-align:center;
+  transform: translateY(-2px);
+}
+
+.graph-center-label .kpi{
+  font-size: 1.45rem;
+  font-weight: 900;
+  color:#ffffff;
+  text-shadow: 0 10px 22px rgba(0,0,0,0.45);
+}
+.graph-center-label .sub{
+  font-size: .85rem;
+  margin-top: .15rem;
+  color: rgba(255,255,255,0.72);
+}
+
+.sites-panel--dark .graph-caption{
+  color: rgba(255,255,255,0.72);
+}
+
+/* lista dentro dark: solo un “contenitore” soft */
+.sites-list-area{
+  margin-top: .75rem;
+  padding-top: .25rem;
+}
+.sites-panel--dark #mapped-sites-container{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: .75rem;
+}

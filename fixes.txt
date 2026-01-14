@@ -2,28 +2,42 @@
 
 - fatto ✅
 
-pulsante per visualizzare tutti i contesti  --> ✅ inserito nella sidebar della hompage tasto "see all records" sotto il toggle "lista-grafico"
-codice BRAIN esplicitato nel pop-up del sito --> ✅
-corsivo per i taxa (ecc. patronimici, subsp. etc)--> ✅ (per il momento inserito nel pop-up samples e nel grafico "samples")
-inserire id del nostro record --> ✅ pop-up sample ora mostra in alto a destra il nostro ID (NB: quello da inserire nche in ACCESS archeologi)
-termine "reliability" (pop-up oggettti) = cambiare termine ✅ (cambiato in "placement accuracy")
-migliorare visibilità su mappa --> ✅ (ora icone raggruppate per taxon, pop-up adattato per "smistare")
-stesso biblography in tutti i pop-up --> ✅
+pulsante per visualizzare tutti i contesti  -->  ✔️ inserito nella sidebar della hompage tasto "see all records" sotto il toggle "lista-grafico"
+codice BRAIN esplicitato nel pop-up del sito -->  ✔️
+corsivo per i taxa (ecc. patronimici, subsp. etc)-->  ✔️ (per il momento inserito nel pop-up samples e nel grafico "samples")
+inserire id del nostro record -->  ✔️ pop-up sample ora mostra in alto a destra il nostro ID (NB: quello da inserire nche in ACCESS archeologi)
+termine "reliability" (pop-up oggettti) = cambiare termine  ✔️ (cambiato in "placement accuracy")
+migliorare visibilità su mappa -->  ✔️ (ora icone raggruppate per taxon, pop-up adattato per "smistare")
+stesso biblography in tutti i pop-up -->  ✔️
 grafico "samples (10)" nella pagina dettaglio da rendere più leggibile--> ✅ (ora vicino al grafico compaiono le icone), in basso i nomi dei taxa, il mouse hoover mostra il n. totale
-pop-up siti (homepage), migliorare graficamente --> ✅ invertito gradiente rosso-verde, inserita una linea per segnalare la media (100%), l'intestazione informa l'utente su come leggere il grafico
+pop-up siti (homepage), migliorare graficamente --> ✔️ invertito gradiente rosso-verde, inserita una linea per segnalare la media (100%), l'intestazione informa l'utente su come leggere il grafico
+
+--- fixes 2.1 🆕
+
+  -> rimossa la sezione "algoritmo" dalla pagina dettaglio dei samples ✔️                                 
+  -> miglioramento grafico della sidebar della homepage (grafico, rimosso link download) ✔️
+  -> miglioramento grafico della sidebar della pagina "webgis" dei record (maggiore compattezza, miglior feeling) ✔️
+  -> miglioramento grafico della sidebar della pagina "webgis" dei record (maggiore compattezza, miglior feeling) ✔️
+  -> "pulizia" grafica della pagina "webgis": sezione filtri per taxa meno invadente, timebar "collassabile", di default non mostrati i campioni ma i siti ✔️                                           
+  -> pop-up sito e contesto trasformati in modali e migliorati graficamente ✔️                                      
+  -> migliorata gestione delle informazioni (sito --> contesto --> sub-contesto (es. US) --> occourence/sample) ✔️                         
+  -> migliorata graficamente timbar e box timebar ✔️                                             
+  -> creazione sistema di visualizzazione "a carte" della pagina, alternativo alla pagina webgis, con esplorazione dashboard custum ✔️                                   
+  -> miglioramenti e aggiustamenti contenuti pagina credits ✔️                                         
 
 - parzialmente fatto ⏳
 
 finire loghi per la mappa --> ⏳ (aggiunto nuovo stock, ma ancora non completo)
 pop-up siti, fix alla sezione contesti (bottone "indietro" non funge) --> ⏳ (non riesco a risolvere il problema definitivamente, devo capire dove si trova il bug)
 
+--- fixes 2.1 🆕
+
+-> aggiunta e rivisione siti Lazio (64/82) 
 
 - da fare ❌
 
 rendere ricercabili i taxa anche per nomi desueti --> ❌
-eliminare il box di "affinità" dalla scheda dettaglio  --> ❌
 aggiornamento nomi file/URL --> ❌
-inserire obbligo di download bibliografia --> ❌ (da capire se vogliamo mantenere tale sezione)
 inserire riferimento esplicito a obiettivi del progetto nella pagina iniziale (sotto il logo) --> ❌
 
 aggiornare in inglese homepage --> ❌
@@ -31,12 +45,6 @@ aggiornare in inglese pagina dettaglio --> ❌
 aggiornare in inglese pagina dettaglio_siti --> ❌
 aggiornare in inglese dettaglio occourence --> ❌
 aggiornare in inglese sezione download --> ❌
-
---- problemi db ----
-
-(NB: tutti i problemi ⏳ non compaiono ancora sul sito definitivo, mentre ✅ sono aggiornati correttamente)
-
-risoluzione altri problemi (siti senza cronologia, taxa senza contesto etc) --> ✅
-taxa --> sostituzione subspecie con specie (ecc. cereali), assegnare subspecie --> ⏳
-recupero delle geometrie del Lazio --> ⏳ (20/84)
+revisione finale dati archeologici (bibliografia, descrizione, poligoni, divisione contesti) --> ❌
+recupero dati mancanti con bibliografia (biblioteca) (0/20) --> ❌
 aggiornare bibliography inserendo solo autore + anno (con link a Brain?) invece di menzione estesa--> ❌ (work in progress)

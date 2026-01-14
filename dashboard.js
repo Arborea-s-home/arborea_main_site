@@ -374,6 +374,11 @@ rebuildSitesList() {
     wrap.appendChild(icon);
     wrap.appendChild(text);
     wrap.appendChild(btn);
+
+    // Per mostrarlo temporaneamente: aggiungi ?download=1 all’URL
+    const params = new URLSearchParams(window.location.search);
+    const showDownload = params.get('download') === '1';
+    wrap.classList.toggle('is-hidden', !showDownload);
   
     // Inserisci subito dopo la sezione Legend
     legend.insertAdjacentElement('afterend', wrap);
