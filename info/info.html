@@ -1,4 +1,3 @@
-<!-- info/info.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,17 +9,21 @@
   <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
   <!-- CSS -->
   <link rel="stylesheet" href="./info.css" />
 
-  <!-- Polyfill & MathJax -->
+  <!-- Polyfill & MathJax (puoi rimuoverlo se non ti serve più) -->
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <!-- JS -->
   <script type="module" src="./info.js"></script>
 </head>
-<body>
+
+<body id="top">
   <!-- HEADER -->
   <header class="page-header">
     <div class="header-content">
@@ -39,24 +42,8 @@
     <img id="banda-logo" alt="Partner Logos" data-src="images/icons/banda_logo.png" />
   </div>
 
-  <!-- LAYOUT: Sidebar + contenuto -->
-  <div class="page-layout">
-    <aside class="toc-sidebar" aria-label="Contents">
-      <nav class="toc">
-        <h3>Contents</h3>
-        <ol>
-          <li><a href="#section-presentation">Presentation</a></li>
-          <li><a href="#section-licensing">Licensing Overview</a></li>
-          <li><a href="#section-primary-sources">Primary Sources</a></li>
-          <li><a href="#section-scientific-team">Scientific Team</a></li>
-          <li><a href="#section-partners">Partners & Credits</a></li>
-          <li><a href="#section-data-model">Data Model</a></li>
-          <li><a href="#section-taxa-affinity">Taxa Affinity Explanation</a></li>
-          <li><a href="#section-future">Future Prospects</a></li>
-        </ol>
-      </nav>
-    </aside>
-
+  <!-- LAYOUT: solo contenuto -->
+  <div class="page-layout no-sidebar">
     <main class="content-container">
       <!-- Presentation -->
       <section id="section-presentation" class="intro-section">
@@ -64,7 +51,13 @@
         <div class="intro-grid">
           <div class="intro-card">
             <p>
-              ARBOREA (ARchaeoBOtanical geoReferenced rEcords of Ancient Italy) is a new digital tool designed to compile, harmonize, and georeference archaeobotanical data from Central Italy. Developed within the NRRP PE5 CHANGES Spoke 8 and aligned with the BRAIN database, ARBOREA addresses key issues of data dispersion and terminological inconsistency. The database integrates information from over 150 sites and 1400 contexts, cataloguing more than 7000 samples and nearly 500 plant taxa. Structured relationally and supported by dedicated thesauri for plant nomenclature, parts, preservation types, and chronology, it enables advanced, multi-factor queries and comparative analyses. ARBOREA enhances data accessibility and fosters interdisciplinary collaboration, offering a robust platform for reconstructing human-environment interactions across time.
+              ARBOREA (ARchaeoBOtanical geoReferenced rEcords of Ancient Italy) is a new digital tool designed to compile,
+              harmonize, and georeference archaeobotanical data from Central Italy. Developed within the NRRP PE5 CHANGES Spoke 8
+              and aligned with the BRAIN database, ARBOREA addresses key issues of data dispersion and terminological inconsistency.
+              The database integrates information from over 150 sites and 1400 contexts, cataloguing more than 7000 samples and nearly
+              500 plant taxa. Structured relationally and supported by dedicated thesauri for plant nomenclature, parts, preservation types,
+              and chronology, it enables advanced, multi-factor queries and comparative analyses. ARBOREA enhances data accessibility and
+              fosters interdisciplinary collaboration, offering a robust platform for reconstructing human-environment interactions across time.
             </p>
           </div>
         </div>
@@ -112,7 +105,10 @@
               </tr>
               <tr>
                 <td>Topographical Data</td>
-                <td>Produced by the scientific team (see <a href="#section-scientific-team">Scientific Team</a>) from online sources or custom-made from bibliographical information</td>
+                <td>
+                  Produced by the scientific team (see <a href="#section-scientific-team">Scientific Team</a>) from online sources or custom-made
+                  from bibliographical information
+                </td>
                 <td><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></td>
               </tr>
             </tbody>
@@ -200,6 +196,7 @@
             </div>
           </a>
 
+          <!-- Rachele (UPDATED) -->
           <div class="person-card">
             <div class="avatar">
               <img alt="Rachele Nicolini" data-src="images/people/Rachele.png" />
@@ -207,7 +204,26 @@
             <div class="p-body">
               <h4>Rachele Nicolini</h4>
               <p class="affil">Sapienza Università di Roma — Research Fellow</p>
-              <p class="role">Data Collection &amp; Digitisation</p>
+              <p class="role">
+                Data Collection &amp; Digitisation
+                <span class="role-sub">(Archaeobotanical Data)</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Erasmo (NEW) -->
+          <div class="person-card">
+            <div class="avatar">
+              <img alt="Erasmo di Fonso" data-src="images/people/Erasmo.png" />
+            </div>
+            <div class="p-body">
+              <h4>Erasmo di Fonso</h4>
+              <p class="affil">ARBOREA</p>
+              <p class="role">
+                Data Collection &amp; Digitisation
+                <span class="role-sub">(Archaeological Data)</span><br />
+                Back- &amp; Front-end development
+              </p>
             </div>
           </div>
         </div>
@@ -225,7 +241,7 @@
         </div>
       </section>
 
-      <!-- Partners & Credits (badge circolari) -->
+      <!-- Partners & Credits -->
       <section id="section-partners" class="partners-section">
         <h2>Partners &amp; Credits</h2>
         <div class="logo-grid round">
@@ -292,7 +308,7 @@
               </div>
               <ul class="fields">
                 <li><span>ID</span><button class="q" data-tip="Primary key.">?</button></li>
-                <li><span>BRAIN_ID</span><button class="q" data-tip="Foreign key to ARBOREA Site.">?</button></li>
+                <li><span>BRAIN_ID</span><button class="q" data-tip="Foreign key to BRAIN Site.">?</button></li>
                 <li><span>Name</span><button class="q" data-tip="Archaeological complex name.">?</button></li>
                 <li><span>chron_orig</span><button class="q" data-tip="Chronology as reported in the original publication.">?</button></li>
                 <li><span>typology</span><button class="q" data-tip="General site typology (e.g., funerary, settlement).">?</button></li>
@@ -387,82 +403,49 @@
         </p>
       </section>
 
-      <!-- Taxa Affinity -->
-      <section id="section-taxa-affinity" class="affinity-section">
-        <h2>Taxa Affinity Explanation</h2>
-        <div class="toggle-container">
-          <label class="switch-label">
-            <input type="checkbox" id="toggleExplanation" />
-            <span class="slider" aria-hidden="true"></span>
-            <span class="label-text">Show Technical Explanation</span>
-          </label>
-        </div>
-
-        <div id="conceptual" class="explanation-section">
-          <div class="explanation-card">
-            <h3>Conceptual Explanation</h3>
+      <!-- Future -->
+      <section id="section-future" class="future-section">
+        <h2>Future Prospects</h2>
+        <div class="future-grid">
+          <div class="future-card">
+            <h3>Roadmap</h3>
             <p>
-              Each sample is described by attributes at the <strong>sample</strong> level (e.g., <em>precise_taxon</em>, <em>Family</em>, <em>genus</em>, <em>s_type</em>, <em>s_part</em>, <em>s_foss</em>, <em>qt</em>) and by attributes inherited from the related <strong>context</strong> (e.g., <em>typology</em>, <em>chronology_iccd</em>). Affinity between two samples is computed by combining matches across these attributes, with weights that increase for rarer values.
+              Planned upgrades include progressive enrichment of thesauri, extended contextual metadata, and additional
+              validation layers for harmonisation and georeferencing workflows.
             </p>
-            <ul class="feature-list">
-              <li><strong>Hard rule:</strong> similarity is zero unless at least one among <em>precise_taxon</em>, <em>genus</em>, or <em>Family</em> matches.</li>
-              <li><strong>Triplet bonus:</strong> a match on the triplet (<em>Family</em>, <em>genus</em>, <em>s_type</em>) yields an additional score scaled by rarity.</li>
-              <li><strong>User control:</strong> users may reweight attributes or reset to defaults.</li>
-            </ul>
           </div>
-
-          <div class="explanation-card">
-            <h4>Rarity</h4>
-            <p>Rarity is computed as the inverse square root of global frequencies, so frequent values have reduced impact, while rare taxa or combinations contribute more.</p>
-          </div>
-
-          <div class="explanation-card">
-            <h4>Output</h4>
-            <p>Similarity is returned as a percentage on a 0–100 scale. A radar breakdown visualises per-attribute contributions, including the triplet bonus when present.</p>
-          </div>
-        </div>
-
-        <div id="technical" class="explanation-section hidden">
-          <div class="infobox sticky-legend">
-            <strong>Symbol Legend:</strong>
-            <div class="legend-columns">
-              <ul>
-                <li><code>s, s′</code> — Samples</li>
-                <li><code>a_j</code> — Attribute index</li>
-                <li><code>v</code> — Attribute value</li>
-                <li><code>T</code> — Triplet (<em>Family</em>, <em>genus</em>, <em>s_type</em>)</li>
-              </ul>
-              <ul>
-                <li><code>w(a_j, v)</code> — Weight = rarity × importance</li>
-                <li><code>λ_j</code> — User-defined importance per attribute</li>
-                <li><code>sim</code> — Similarity</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="math-section">
-            <h3>1. Attribute Weights &amp; Rarity</h3>
-            <p>\( w(a_j, v) = \frac{1}{\sqrt{f(a_j, v)}} \cdot \lambda_j \)</p>
-          </div>
-
-          <div class="math-section">
-            <h3>2. Weighted Jaccard</h3>
-            <p>Similarity uses weighted unions/intersections and adds the triplet bonus to the numerator.</p>
-          </div>
-
-          <div class="math-section">
-            <h3>3. Triplet Bonus</h3>
-            <p>If values match for all attributes in <code>T</code>, a bonus \( \sum 1/\sqrt{f_T} \) is added.</p>
-          </div>
-
-          <div class="math-section">
-            <h3>4. Hard Rule</h3>
-            <p>If none among <em>precise_taxon</em>, <em>genus</em>, or <em>Family</em> match, then \( \text{sim}(s,s') = 0 \).</p>
+          <div class="future-card">
+            <h3>Interoperability</h3>
+            <p>
+              The project aims at strengthening interoperability with external databases and linked open data resources,
+              while improving export options for research and teaching.
+            </p>
           </div>
         </div>
       </section>
+
     </main>
   </div>
+
+  <!-- BOTTOM NAVBAR (icone only) -->
+  <nav class="bottom-nav" aria-label="Quick navigation">
+    <a class="bn" href="#section-presentation" aria-label="Presentation"><i class="bi bi-easel2"></i></a>
+    <a class="bn" href="#section-licensing" aria-label="Licensing"><i class="bi bi-shield-check"></i></a>
+    <a class="bn" href="#section-primary-sources" aria-label="Primary Sources"><i class="bi bi-journal-text"></i></a>
+    <a class="bn" href="#section-scientific-team" aria-label="Scientific Team"><i class="bi bi-people"></i></a>
+    <a class="bn" href="#section-partners" aria-label="Partners & Credits"><i class="bi bi-award"></i></a>
+    <a class="bn" href="#section-data-model" aria-label="Data Model"><i class="bi bi-diagram-3"></i></a>
+    <a class="bn" href="#section-future" aria-label="Future Prospects"><i class="bi bi-lightbulb"></i></a>
+
+    <span class="bn-sep" aria-hidden="true"></span>
+
+    <a class="bn" data-href="record_necropoli/necropoli/index.html?all=1" aria-label="WebGIS">
+      <i class="bi bi-map"></i>
+    </a>
+    <a class="bn" data-href="index.html" aria-label="Home"><i class="bi bi-house-door"></i></a>
+    <button class="bn" id="nav-print" type="button" aria-label="Print"><i class="bi bi-printer"></i></button>
+    <a class="bn" href="#top" aria-label="Back to top"><i class="bi bi-arrow-up"></i></a>
+  </nav>
 
   <!-- FOOTER -->
   <footer class="page-footer">
